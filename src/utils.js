@@ -1,7 +1,6 @@
 const process = require('process')
 const crypto = require('crypto')
 const picomatch = require('picomatch')
-const log = require('debug-level').log
 
 const isNil = v => v === null || v === undefined
 
@@ -78,6 +77,8 @@ const isMatch = (pattern) => {
 
 const nextTick = () => new Promise(resolve => process.nextTick(resolve))
 
+const msToSecs = (ms) => ms > 0 ? Math.floor(ms / 1000) : ms
+
 module.exports = {
   capitalize,
   createPromise,
@@ -93,6 +94,7 @@ module.exports = {
   toHumanMemSize,
   toNumber,
   isMatch,
-  nextTick
+  nextTick,
+  msToSecs
   // uuid4
 }

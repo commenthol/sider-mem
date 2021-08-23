@@ -116,6 +116,12 @@ describe('Server', function () {
       }, /^ERR unknown command `foo`, with args beginning with: `1`, `one`/)
     })
 
+    it('time', async function () {
+      const result = await client.time()
+      log(result)
+      strictEqual(result.length, 2)
+    })
+
     it('command', async function () {
       const res = await client.command()
       const obj = Object.fromEntries(res)

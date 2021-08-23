@@ -20,7 +20,8 @@ const {
   capitalize,
   toHumanMemSize,
   isMatch,
-  nextTick
+  nextTick,
+  msToSecs
 } = require('./utils.js')
 const {
   OK,
@@ -47,8 +48,6 @@ const {
   TYPE_STRING,
   TYPE_HASH
 } = require('./constants.js')
-
-const msToSecs = (ms) => ms > 0 ? Math.floor(ms / 1000) : ms
 
 const assertInteger = (value) => {
   if (!isInteger(toNumber(value))) {
@@ -347,6 +346,13 @@ class Commands {
     }
 
     return Object.entries(commandList).reduce(reducer, [])
+  }
+
+  time () {
+    const now = Date.now()
+    const secs = msToSecs(now)
+    const microSecs = (now % secs) * 1000
+    return [secs, microSecs].map(String)
   }
 
   // ---- admin

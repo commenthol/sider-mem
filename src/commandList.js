@@ -172,7 +172,7 @@ const commandList = {
   // sunionstore: [-3, ['write', 'denyoom'], 1, -1, 1, ['@write', '@set', '@slow']],
   // swapdb: [3, ['write', 'fast'], 0, 0, 0, ['@keyspace', '@write', '@fast', '@dangerous']],
   // sync: [1, ['admin', 'noscript'], 0, 0, 0, ['@admin', '@slow', '@dangerous']],
-  // time: [1, ['random', 'loading', 'stale', 'fast'], 0, 0, 0, ['@fast']],
+  time: [1, ['random', 'loading', 'stale', 'fast'], 0, 0, 0, ['@fast']],
   // touch: [-2, ['readonly', 'fast'], 1, -1, 1, ['@keyspace', '@read', '@fast']],
   ttl: [2, ['readonly', 'random', 'fast'], 1, 1, 1, ['@keyspace', '@read', '@fast']],
   type: [2, ['readonly', 'fast'], 1, 1, 1, ['@keyspace', '@read', '@fast']]
