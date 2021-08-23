@@ -57,7 +57,9 @@ const toHumanMemSize = (size) => {
   return tmp.toFixed(3) + (units[cnt] || '')
 }
 
-const escapeRegExp = string => string.replace(/[|\\{}()^$+?.]/g, '\\$&')
+const escapeRegExp = string => string
+  .replace(/[|\\{}()^$+.]/g, '\\$&')
+  .replace(/\\(\\[*?[\]])/g, '$1') // remove double-escaping
 const MATCH_OPTS = {
   dot: true,
   nobrace: false,
