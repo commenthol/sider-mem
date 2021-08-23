@@ -1,14 +1,8 @@
 const process = require('process')
 const net = require('net')
-const {
-  Cache
-} = require('./Cache.js')
-const {
-  Client
-} = require('./Client.js')
-const {
-  Commands
-} = require('./Commands.js')
+const { Cache } = require('./Cache.js')
+const { Client } = require('./Client.js')
+const { Commands } = require('./Commands.js')
 const {
   OK,
   USERNAME_DEFAULT,
@@ -25,9 +19,12 @@ const {
   isFunction,
   sleep,
   timingSafeEqual,
-  createPromise,
-  logger
+  createPromise
 } = require('./utils.js')
+const {
+  setLogFn,
+  logger
+} = require('./log.js')
 
 const EXIT_SIGNALS = [
   'SIGINT',
@@ -36,21 +33,24 @@ const EXIT_SIGNALS = [
   'SIGBREAK'
 ]
 
-let log = logger()
+let log
 
 class Server {
   constructor (options) {
     const {
       username = USERNAME_DEFAULT,
       password,
-      log: logger,
+      log: _logger, // general logging e.g. to use console logging `() => console`
       gracefulTimeout = 100, // server timeout
       maxBufferLength, // RequestParser
       HashMap, // Cache
       nextHouseKeepingSec // Cache
     } = options || {}
 
-    if (logger) log = logger
+    if (isFunction(_logger)) {
+      setLogFn(_logger)
+    }
+    log = logger()
 
     this._config = {
       version: '7.0.0',

@@ -34,7 +34,9 @@ describe('Server', function () {
   let server
 
   before(function () {
-    server = new Server()
+    const opts = { }
+    // const opts = { log: () => console }
+    server = new Server(opts)
     return server.listen({ port: PORT })
   })
   after(function () {

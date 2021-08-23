@@ -76,8 +76,6 @@ const isMatch = (pattern) => {
   return picomatch(escapedPattern, MATCH_OPTS)
 }
 
-const logger = (namespace) => log('sider-mem-cache' + (namespace ? ':' + namespace : ''))
-
 const nextTick = () => new Promise(resolve => process.nextTick(resolve))
 
 module.exports = {
@@ -95,7 +93,6 @@ module.exports = {
   toHumanMemSize,
   toNumber,
   isMatch,
-  logger,
   nextTick
   // uuid4
 }
