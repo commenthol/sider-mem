@@ -6,14 +6,11 @@ const { Commands } = require('./Commands.js')
 const {
   OK,
   USERNAME_DEFAULT,
-  ERR_NOAUTH,
-  ERR_EXECABORT
+  ERR_NOAUTH
 } = require('./constants.js')
 const {
-  createSimpleArrayResp,
   writeResponse,
-  RequestParser,
-  ResponseData
+  RequestParser
 } = require('./Protocol.js')
 const {
   isFunction,
@@ -96,32 +93,14 @@ class Server {
     }
 
     let data
-    if (cmd === 'multi') { // start transaction
-      this._multi = []
-      data = OK
-    } else if (cmd === 'exec') { // execute transaction
-      // TODO: rollback on error
       try {
-        const arr = []
-        for (const [cmd, args] of this._multi) {
-          const result = await this._handleCommand(commands, cmd, args)
-          arr.push(writeResponse(result))
+      if (commands.hasTransaction()) {
+        data = await commands.handleTransaction(cmd, args)
+      } else {
+        data = await commands.handleCommand(cmd, args)
         }
-        data = new ResponseData(arr, createSimpleArrayResp)
-      } catch (err) {
-        log.error('EXECABORT %s', err.message)
-        data = new Error(ERR_EXECABORT)
-      }
-      this._multi = undefined
-    } else if (this._multi) { // queue multi request
-      this._multi.push([cmd, args])
-      data = 'QUEUED'
-    } else { // other commands
-      try {
-        data = await this._handleCommand(commands, cmd, args)
       } catch (err) {
         data = err
-      }
     }
 
     return writeResponse(data)

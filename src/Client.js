@@ -30,6 +30,24 @@ class Client {
     return this._isAuth
   }
 
+  get hasTransaction () {
+    return this._hasTransaction
+  }
+
+  startTransaction () {
+    this._hasTransaction = true
+    this._transaction = []
+  }
+
+  pushTransaction (cmd, args) {
+    this._transaction.push([cmd, args])
+  }
+
+  endTransaction () {
+    this._hasTransaction = false
+    return this._transaction
+  }
+
   // --- async handling
 
   setCursor (cursor, iterator, done) {

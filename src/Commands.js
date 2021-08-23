@@ -11,10 +11,13 @@ const os = require('os')
 const { commandList } = require('./commandList.js')
 const {
   createBulkStringResp,
-  ResponseData
+  createSimpleArrayResp,
+  ResponseData,
+  writeResponse
 } = require('./Protocol.js')
 const {
   isNil,
+  isFunction,
   isInteger,
   toNumber,
   capitalize,
@@ -36,6 +39,7 @@ const {
   ERR_SYNTAX,
   ERR_VALUE_FLOAT,
   ERR_WRONGPASS,
+  ERR_EXECABORT,
   NX,
   XX,
   GT,
@@ -48,6 +52,9 @@ const {
   TYPE_STRING,
   TYPE_HASH
 } = require('./constants.js')
+const { logger } = require('./log.js')
+
+let log
 
 const assertInteger = (value) => {
   if (!isInteger(toNumber(value))) {
@@ -92,6 +99,8 @@ class Commands {
       client
     } = options
 
+    log = logger('commands')
+
     this._server = server
     this._client = client
     this._cache = server._cache
@@ -124,6 +133,17 @@ class Commands {
     }
     if (fails) {
       throw new Error(`ERR wrong number of arguments for '${cmd}' command`)
+    }
+  }
+
+  async handleCommand (cmd, args) {
+    if (isFunction(this[cmd])) {
+      this.assertCommand(cmd, args)
+      const data = await this[cmd](...args)
+      // log.debug(cmd, data)
+      return data
+    } else {
+      throw this.unknownCommand(cmd, args)
     }
   }
 
@@ -488,6 +508,40 @@ class Commands {
       } else {
         await nextTick()
       }
+    }
+  }
+
+  // --- transaction
+
+  hasTransaction () {
+    return this._client.hasTransaction
+  }
+
+  handleTransaction (cmd, args) {
+    if (cmd === 'exec') {
+      return this.exec()
+    }
+    this._client.pushTransaction(cmd, args)
+    return 'QUEUED'
+  }
+
+  multi () {
+    this._client.startTransaction()
+    return OK
+  }
+
+  async exec () {
+    try {
+      const arr = []
+      const cmdArgs = this._client.endTransaction()
+      for (const [cmd, args] of cmdArgs) {
+        const result = await this.handleCommand(cmd, args)
+        arr.push(writeResponse(result))
+      }
+      return new ResponseData(arr, createSimpleArrayResp)
+    } catch (err) {
+      log.warn('EXECABORT %s', err.message)
+      return new Error(ERR_EXECABORT)
     }
   }
 
