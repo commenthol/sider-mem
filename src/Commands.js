@@ -19,6 +19,7 @@ const {
   isNil,
   isFunction,
   isInteger,
+  isString,
   toNumber,
   capitalize,
   toHumanMemSize,
@@ -37,6 +38,7 @@ const {
   ERR_HASH_INTEGER,
   ERR_NOT_INTEGER,
   ERR_SYNTAX,
+  ERR_TYPE,
   ERR_VALUE_FLOAT,
   ERR_WRONGPASS,
   ERR_EXECABORT,
@@ -55,6 +57,9 @@ const {
 const { logger } = require('./log.js')
 
 let log
+
+const PEXPIREAT = 'pexpireat'
+const SET = 'set'
 
 const assertInteger = (value) => {
   if (!isInteger(toNumber(value))) {
@@ -96,14 +101,17 @@ class Commands {
   constructor (options) {
     const {
       server,
-      client
+      cache,
+      client,
+      drain
     } = options
 
     log = logger('commands')
 
     this._server = server
     this._client = client
-    this._cache = server._cache
+    this._cache = cache || server._cache
+    this._drain = drain
   }
 
   unknownCommand (cmd, args) {
@@ -451,10 +459,15 @@ class Commands {
 
   del (...keys) {
     let count = 0
+    const deletedKeys = []
     for (const key of keys) {
       if (this._cache.delete(key)) {
+        deletedKeys.push(key)
         count++
       }
+    }
+    if (deletedKeys.length) {
+      this._drain.write('del', ...deletedKeys)
     }
     return count
   }
@@ -576,39 +589,48 @@ class Commands {
       return FALSE
     }
 
+    let retVal = FALSE
+
     switch (type) { // type is supported since v7.0.0
       case NX:
         if (ttl === KEY_NO_EXPIRY) {
-          this._cache.setExpiry(key, timestampMs)
-          return TRUE
+          retVal = TRUE
         }
         break
       case XX:
         if (ttl !== KEY_NO_EXPIRY) {
-          this._cache.setExpiry(key, timestampMs)
-          return TRUE
+          retVal = TRUE
         }
         break
       case GT: {
         const ts = this._cache.getExpiry(key)
         if (timestampMs > ts) {
-          this._cache.setExpiry(key, timestampMs)
-          return TRUE
+          retVal = TRUE
         }
         break
       }
       case LT: {
         const ts = this._cache.getExpiry(key)
         if (timestampMs < ts) {
-          this._cache.setExpiry(key, timestampMs)
-          return TRUE
+          retVal = TRUE
         }
         break
       }
       default: {
-        this._cache.setExpiry(key, timestampMs)
-        return TRUE
+        retVal = TRUE
+        break
       }
+    }
+
+    if (timestampMs <= Date.now()) {
+      this.del(key)
+      return FALSE
+    }
+
+    if (retVal === TRUE) {
+      this._cache.setExpiry(key, timestampMs)
+      this._drain.write(PEXPIREAT, key, timestampMs)
+      return TRUE
     }
     return FALSE
   }
@@ -634,25 +656,31 @@ class Commands {
   }
 
   persist (key) {
-    if (!this.exists(key)) {
+    if (this.pttl(key) <= 0) {
       return FALSE
     }
     this._cache.deleteExpiry(key)
+    this._drain.write('persist', key)
     return TRUE
   }
 
   // ---- strings
 
   set (key, value, type, amount) {
-    switch (type) {
-      case 'EX':
+    let timestampMs
+    const _type = type && String(type).toUpperCase()
+
+    switch (_type) {
+      case 'EX': {
         assertInteger(amount)
-        this._cache.setExpiry(key, Date.now() + (toNumber(amount) * 1000))
+        timestampMs = Date.now() + (toNumber(amount) * 1000)
         break
-      case 'PX':
+      }
+      case 'PX': {
         assertInteger(amount)
-        this._cache.setExpiry(key, Date.now() + toNumber(amount))
+        timestampMs = Date.now() + toNumber(amount)
         break
+      }
       case 'NX':
         if (this.exists(key)) {
           return null
@@ -668,7 +696,15 @@ class Commands {
           throw new Error(ERR_SYNTAX)
         }
     }
+    if (!isString(value)) {
+      throw new Error(ERR_TYPE)
+    }
     this._cache.set(key, value, TYPE_STRING)
+    this._drain.write(SET, key, value)
+    if (!isNil(timestampMs)) {
+      this._cache.setExpiry(key, timestampMs)
+      this._drain.write(PEXPIREAT, key, timestampMs)
+    }
     return OK
   }
 
@@ -698,8 +734,9 @@ class Commands {
     for (let i = 0; i < keyValues.length; i += 2) {
       const key = keyValues[i]
       const value = keyValues[i + 1]
-      this.set(key, value)
+      this._cache.set(key, value, TYPE_STRING)
     }
+    this._drain.write('mset', ...keyValues)
     return OK
   }
 
@@ -789,6 +826,7 @@ class Commands {
     }
     value += inc
     this._cache.set(key, value, TYPE_STRING)
+    this._drain.write(SET, key, value)
     return value
   }
 
@@ -804,6 +842,7 @@ class Commands {
       obj[prop] = value
     }
     this._cache.set(key, obj, TYPE_HASH)
+    this._drain.write('hset', ...fieldVals)
     return cnt
   }
 
@@ -884,6 +923,7 @@ class Commands {
         delete obj[field]
       }
     })
+    this._drain.write('hdel', key, ...fields)
     return cnt
   }
 

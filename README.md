@@ -7,6 +7,7 @@ Supports:
 - expiry ([expire][], [ttl][], [pexpire][], [pttl][], ...)
 - strings ([set][], [mset][], [get][], [mget][], ...)
 - hashes ([hset][], [hmset][], [hget][], [hgetall][], ...)
+- persistence
 
 Does not (yet) support:
 - transactions (rollback on error)
@@ -14,7 +15,6 @@ Does not (yet) support:
 - streams
 - publish/ subscribe
 - partitioning
-- persistence
 - replication
 - Lua scripting
 

@@ -1,8 +1,10 @@
 const process = require('process')
 const net = require('net')
+const path = require('path')
 const { Cache } = require('./Cache.js')
 const { Client } = require('./Client.js')
 const { Commands } = require('./Commands.js')
+const { Persistence } = require('./Persistence.js')
 const {
   OK,
   USERNAME_DEFAULT,
@@ -41,13 +43,18 @@ class Server {
       gracefulTimeout = 100, // server timeout
       maxBufferLength, // RequestParser
       HashMap, // Cache
-      nextHouseKeepingSec // Cache
+      nextHouseKeepingSec, // Cache
+      dbDir // Persistence
     } = options || {}
 
     if (isFunction(_logger)) {
       setLogFn(_logger)
     }
     log = logger()
+
+    const filename = dbDir
+      ? path.resolve(dbDir, 'db.aof')
+      : undefined
 
     this._config = {
       version: '7.0.0',
@@ -58,6 +65,7 @@ class Server {
 
     this._opts = { maxBufferLength, gracefulTimeout }
     this._cache = new Cache({ HashMap, nextHouseKeepingSec, server: this })
+    this._store = new Persistence({ filename, cache: this._cache })
 
     this._sockets = new Set()
     this._isShutdown = false
@@ -67,17 +75,6 @@ class Server {
       const u = timingSafeEqual(auth.username, username)
       const p = timingSafeEqual(auth.password, password)
       return u && p
-    }
-  }
-
-  async _handleCommand (commands, cmd, args) {
-    if (isFunction(commands[cmd])) {
-      commands.assertCommand(cmd, args)
-      const data = await commands[cmd](...args)
-      // log.debug(cmd, data)
-      return data
-    } else {
-      throw commands.unknownCommand(cmd, args)
     }
   }
 
@@ -93,14 +90,14 @@ class Server {
     }
 
     let data
-      try {
+    try {
       if (commands.hasTransaction()) {
         data = await commands.handleTransaction(cmd, args)
       } else {
         data = await commands.handleCommand(cmd, args)
-        }
-      } catch (err) {
-        data = err
+      }
+    } catch (err) {
+      data = err
     }
 
     return writeResponse(data)
@@ -119,7 +116,7 @@ class Server {
 
     const parser = new RequestParser(this._opts)
     const client = new Client(socket)
-    const commands = new Commands({ server: this, client })
+    const commands = new Commands({ server: this, drain: this._store, client })
 
     log.info('client connected %s', client.addr)
 
@@ -136,12 +133,10 @@ class Server {
       if (client.queueRequest(req)) {
         processQueuedRequest()
       }
-      // const data = await this._handleRequest(req, commands, client)
-      // log.debug('%j', data)
-      // socket.write(data)
     })
 
     socket.on('data', (data) => {
+      // log.warn('%s', data.toString())
       parser.parse(data)
     })
 
@@ -159,12 +154,14 @@ class Server {
     })
   }
 
-  listen (options) {
+  async listen (options) {
     const {
       socket,
       host = '127.0.0.1',
       port = 6379
     } = options || {}
+
+    await this._store.load()
 
     Object.assign(this._opts, { socket, host, port })
     this._server = net.createServer(socket => this._connect(socket))

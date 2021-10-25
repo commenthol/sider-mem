@@ -774,7 +774,7 @@ describe('Server', function () {
     it('persist', async function () {
       const sleep = sleepx(clock)
 
-      const key = 'test:persis:1'
+      const key = 'test:persist:1'
       const value = 'foobar'
       const multi = client.cb.multi()
         .del(key)

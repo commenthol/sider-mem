@@ -1,6 +1,7 @@
 node_modules/
 coverage/
 tmp/
+test/fixtures/large.aof
 *.tgz
 *.log
 .DS_Store

@@ -33,8 +33,6 @@ function timingSafeEqual (a, b) {
 //     (c ^ (crypto.randomBytes(1)[0] & (15 >> (c / 4)))).toString(16)
 //   )
 
-const sleep = (ms) => new Promise(resolve => setTimeout(() => resolve(), ms))
-
 const createPromise = () => {
   const p = {}
   p.promise = new Promise((resolve, reject) => {
@@ -74,6 +72,8 @@ const isMatch = (pattern) => {
   // console.log(picomatch.parse(escapedPattern, MATCH_OPTS))
   return picomatch(escapedPattern, MATCH_OPTS)
 }
+
+const sleep = (ms) => new Promise(resolve => setTimeout(() => resolve(), ms))
 
 const nextTick = () => new Promise(resolve => process.nextTick(resolve))
 

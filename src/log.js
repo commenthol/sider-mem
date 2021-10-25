@@ -4,7 +4,7 @@ let logFn = debug
 
 const setLogFn = (log) => { logFn = log }
 
-const logger = (namespace) => logFn('sider-mem-cache' + (namespace ? ':' + namespace : ''))
+const logger = (namespace) => logFn('sider-mem' + (namespace ? ':' + namespace : ''))
 
 module.exports = {
   logger,
