@@ -82,6 +82,10 @@ class Cache {
     }
   }
 
+  size () {
+    return this.map.size
+  }
+
   clear () {
     this.expires.clear()
     this.map.clear()
@@ -100,7 +104,9 @@ class Cache {
   }
 
   setExpiry (key, expiry) {
-    return this.expires.set(key, expiry)
+    if (this.map.has(key)) {
+      this.expires.set(key, expiry)
+    }
   }
 
   deleteExpiry (key) {
