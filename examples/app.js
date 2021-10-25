@@ -25,9 +25,9 @@ ${body}
 }
 
 function app (opts) {
-  const { host, port, ttl = 60 } = opts || {}
+  const { port, ttl = 60 } = opts || {}
 
-  const redisClient = redis.createClient({ host, port })
+  const redisClient = redis.createClient({ port })
   const app = express()
 
   redisClient.on('error', (err) => console.error('redis error %s', err))

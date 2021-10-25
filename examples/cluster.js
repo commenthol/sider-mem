@@ -1,13 +1,16 @@
 /* eslint no-console:off */
+
 const cluster = require('cluster')
 const http = require('http')
 const numCPUs = Math.min(4, require('os').cpus().length)
 const process = require('process')
-const { Server } = require('../src')
 const { app } = require('./app.js')
 
+// const { Server } = require('sider-mem')
+const { Server } = require('../src')
+
 const main = async () => {
-  const { PORT: port = 6379, HOST: host = '0.0.0.0', TTL: ttl = 10 } = process.env
+  const { PORT: port = 6379, HOST: host, TTL: ttl = 10 } = process.env
 
   if (cluster.isMaster || cluster.isPrimary) {
     console.log('Primary %s is running; %s', process.pid, numCPUs)
