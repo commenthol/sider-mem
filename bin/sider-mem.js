@@ -33,7 +33,8 @@ const cmmds = {
   port: ['-p', '--port', 'string', 'port the server listens on', 6379],
   host: ['', '--host', 'string', 'host', '127.0.0.1'],
   username: ['', '--username', 'string', 'username'],
-  password: ['', '--password', 'string', 'password']
+  password: ['', '--password', 'string', 'password'],
+  dbDir: ['-d', '--dbdir', 'string', 'database directory. enables persistence ']
 }
 
 async function main () {
@@ -50,8 +51,8 @@ async function main () {
     return
   }
 
-  const { username, password, host, port } = options
-  const server = new Server({ username, password })
+  const { username, password, host, port, dbDir } = options
+  const server = new Server({ username, password, dbDir })
   await server.listen({ host, port })
 }
 

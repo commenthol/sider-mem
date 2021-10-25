@@ -1,8 +1,10 @@
-const process = require('process')
-const { promisify } = require('util')
 const assert = require('assert')
 const log = require('debug')('test:server')
+const fsp = require('fs/promises')
+const path = require('path')
+const process = require('process')
 const sinon = require('sinon')
+const { promisify } = require('util')
 const { Server } = require('..')
 const { sleep } = require('../src/utils.js')
 const {
@@ -1508,5 +1510,96 @@ describe('Client quit', function () {
     await assertError(async () => {
       await client.hello()
     }, "HELLO can't be processed. The connection is already closed.")
+  })
+})
+
+describe('Server with persistence', function () {
+  const dbDir = path.resolve(__dirname, 'fixtures')
+  const baseFilename = path.resolve(dbDir, 'db')
+
+  const noop = () => {}
+  const toArr = (obj) => Object.entries(obj).flat()
+  const toSecs = ms => Math.floor(ms / 1000)
+  const toEpoch = datestr => new Date(datestr).getTime()
+  const toTicks = datestr => toSecs(toEpoch(datestr) - Date.now()) * 1000
+  const getCacheContent = (cache) => ({
+    map: Object.fromEntries(cache.map),
+    expires: Object.fromEntries(cache.expires)
+  })
+
+  const opts = { dbDir }
+  // const opts = { dbDir, log: () => console }
+
+  before(async function () {
+    await fsp.unlink(baseFilename + '.aof').catch(noop)
+  })
+
+  let server
+  before(function () {
+    server = new Server(opts)
+    return server.listen({ port: PORT })
+  })
+  after(function () {
+    return server.close()
+  })
+
+  let client
+  before(async function () {
+    const host = '127.0.0.1'
+    client = createClient({ host, port: clientPort })
+    await client.info()
+  })
+  after(function () {
+    client.quit()
+  })
+
+  const cacheContent = {}
+
+  it('shall create persistent keys', async function () {
+    const results = await Promise.all([
+      client.set('str1', 'str1'),
+      client.set('str2', 'str2', 'PX', toTicks('2000-01-01T12:00:00Z')),
+      client.set('str3', 'str3'),
+      client.set('str4', 'str4', 'EX', toSecs(toTicks('2030-01-01T12:00:00Z'))),
+      client.mset('m:num1', '1', 'm:num2', '2', 'm:num3', '3', 'm:num4', '4'),
+      client.hset('hash:1', ...toArr({ a: 1, b: 2, c: 3 })),
+      client.expireat('hash:1', toSecs(toEpoch('2030-01-01T12:00:00Z'))),
+      client.incr('m:num2'),
+      client.decr('m:num4'),
+      client.del('m:num1', 'm:num3'),
+      client.persist('str2'),
+      client.persist('str4')
+    ])
+    // console.log(results)
+    deepStrictEqual(
+      results,
+      ['OK', 'OK', 'OK', 'OK', 'OK', 3, 1, 3, 3, 2, 0, 1]
+    )
+    Object.assign(cacheContent, getCacheContent(server._cache))
+  })
+
+  it('compare stored db', async function () {
+    const pexpireatMsReplacer = str => str.replace(/(pexpireat\r\n\$4\r\n\S+\r\n:)(\d+)/g, (m, m1, m2) => {
+      m2 = m2.replace(/\d{3}$/, '000')
+      return m1 + m2
+    })
+
+    const result = await fsp.readFile(baseFilename + '.aof', 'utf8')
+    const exp = await fsp.readFile(baseFilename + '.exp.aof', 'utf8')
+
+    strictEqual(pexpireatMsReplacer(result), pexpireatMsReplacer(exp))
+  })
+
+  it('start with persisted db', async function () {
+    const server = new Server(opts)
+    await server.listen({ port: PORT + 1 })
+
+    // verify cache content
+    deepStrictEqual(
+      getCacheContent(server._cache),
+      cacheContent
+    )
+
+    await server.close()
   })
 })

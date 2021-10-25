@@ -41,7 +41,7 @@ class Persistence {
     parser.on('request', req => {
       const [cmd, ...args] = req
       commands.handleCommand(cmd, args).catch(err => {
-        log.error('%s', err.message)
+        log.error('%s for "%s" "%s"', err.message, cmd, args)
       })
     })
 

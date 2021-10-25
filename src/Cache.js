@@ -11,7 +11,7 @@ class Cache {
   constructor (options) {
     const {
       HashMap = Map,
-      nextHouseKeepingSec = 10
+      nextHouseKeepingSec = 30
     } = options
 
     this.map = new HashMap()

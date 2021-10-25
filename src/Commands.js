@@ -20,6 +20,7 @@ const {
   isFunction,
   isInteger,
   isString,
+  isNumber,
   toNumber,
   capitalize,
   toHumanMemSize,
@@ -90,7 +91,7 @@ const parseScanArgs = args => {
         type = val
         break
       default:
-        console.error(cmd, val)
+        log.error('%s for "%s" "%s"', ERR_SYNTAX, cmd, val)
         throw new Error(ERR_SYNTAX)
     }
   }
@@ -696,7 +697,7 @@ class Commands {
           throw new Error(ERR_SYNTAX)
         }
     }
-    if (!isString(value)) {
+    if (!(isString(value) || isNumber(value))) {
       throw new Error(ERR_TYPE)
     }
     this._cache.set(key, value, TYPE_STRING)
@@ -842,7 +843,7 @@ class Commands {
       obj[prop] = value
     }
     this._cache.set(key, obj, TYPE_HASH)
-    this._drain.write('hset', ...fieldVals)
+    this._drain.write('hset', key, ...fieldVals)
     return cnt
   }
 

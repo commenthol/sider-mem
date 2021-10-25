@@ -10,7 +10,7 @@ const { app } = require('./app.js')
 const { Server } = require('../src')
 
 const main = async () => {
-  const { PORT: port = 6379, HOST: host, TTL: ttl = 10 } = process.env
+  const { PORT: port = 6379, HOST: host, TTL: ttl = 300 } = process.env
 
   if (cluster.isMaster || cluster.isPrimary) {
     console.log('Primary %s is running; %s', process.pid, numCPUs)

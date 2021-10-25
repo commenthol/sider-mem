@@ -16,7 +16,6 @@ Does not (yet) support:
 - publish/ subscribe
 - partitioning
 - replication
-- Lua scripting
 
 ## installation
 
@@ -26,6 +25,7 @@ start the server
 
     npx sider-mem --port 6379 --user alice --password somepassword
 
+
 ## usage
 
 ```js
@@ -33,7 +33,9 @@ const { Server } = require('sider-mem')
 
 // start the server
 const server = new Server({username: 'alice', password: 'somepassword'})
-server.listen({ port: 6379 })
+await server.listen({ port: 6379 })
+
+// ...
 
 // disconnect
 await server.close()
@@ -48,6 +50,31 @@ const client = redis.createClient({user: 'alice', password: 'somepassword'})
 
 client.ping((err, data) => console.log(data)) // PONG
 ```
+
+See [example](./examples) for use with a clustered app. 
+Start with `npm run example` and browse to http://localhost:3000
+
+
+## API
+
+### new Server()
+
+| Option              | default       | Description                                                  |
+| ------------------- | ------------- | ------------------------------------------------------------ |
+| username            | "default"     | Enables authentication                                       |
+| password            | -             |                                                              |
+| log                 | _debug-level_ | Changes logger; ee.g. to use console logging `() => console` |
+| gracefulTimeout     | 100           | (ms) Server timeout on shutdown                              |
+| nextHouseKeepingSec | 30            | (s) Housekeeping interval for cleanup of expired keys        |
+| dbDir               | -             | Persistence: database directory for append only files        |
+
+### server.listen()
+
+| Option   | default   | Description |
+| -------- | --------- | ----------- |
+| port     | 6379      | Listening Port |
+| host     | 127.0.0.1 | Set to `0.0.0.0` to accept incoming connections from any host |
+
 
 ## commands
 
@@ -99,6 +126,7 @@ client.ping((err, data) => console.log(data)) // PONG
 - [mset][]
 - [msetnx][]
 - [multi][]
+- [persist][]
 - [pexpire][]
 - [pexpireat][]
 - [pexpiretime][]
@@ -119,6 +147,9 @@ client.ping((err, data) => console.log(data)) // PONG
 - [type][]
 
 </details>
+
+<br>
+<br>
 
 # license
 
@@ -176,6 +207,7 @@ client.ping((err, data) => console.log(data)) // PONG
 [mset]: https://redis.io/commands/mset
 [msetnx]: https://redis.io/commands/msetnx
 [multi]: https://redis.io/commands/multi
+[persist]: https://redis.io/commands/persist
 [pexpire]: https://redis.io/commands/pexpire
 [pexpireat]: https://redis.io/commands/pexpireat
 [pexpiretime]: https://redis.io/commands/pexpiretime
