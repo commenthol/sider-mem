@@ -633,6 +633,14 @@ class Commands {
     return timestamp - Date.now()
   }
 
+  persist (key) {
+    if (!this.exists(key)) {
+      return FALSE
+    }
+    this._cache.deleteExpiry(key)
+    return TRUE
+  }
+
   // ---- strings
 
   set (key, value, type, amount) {

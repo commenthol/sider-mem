@@ -103,7 +103,7 @@ const commandList = {
   msetnx: [-3, ['write', 'denyoom'], 1, -1, 2, ['@write', '@string', '@slow']],
   multi: [1, ['noscript', 'loading', 'stale', 'fast'], 0, 0, 0, ['@fast', '@transaction']],
   // object: [-2, ['readonly', 'random'], 2, 2, 1, ['@keyspace', '@read', '@slow']],
-  // persist: [2, ['write', 'fast'], 1, 1, 1, ['@keyspace', '@write', '@fast']],
+  persist: [2, ['write', 'fast'], 1, 1, 1, ['@keyspace', '@write', '@fast']],
   pexpire: [-3, ['write', 'fast'], 1, 1, 1, ['@keyspace', '@write', '@fast']],
   pexpireat: [3, ['write', 'fast'], 1, 1, 1, ['@keyspace', '@write', '@fast']],
   pexpiretime: [2, ['readonly', 'random', 'fast'], 1, 1, 1, ['@keyspace', '@read', '@fast']],

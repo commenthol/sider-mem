@@ -1,7 +1,7 @@
 const process = require('process')
 const { promisify } = require('util')
 const assert = require('assert')
-const log = require('debug')('test')
+const log = require('debug')('test:server')
 const sinon = require('sinon')
 const { Server } = require('..')
 const { sleep } = require('../src/utils.js')
@@ -766,6 +766,57 @@ describe('Server', function () {
       assert.strictEqual(
         await client.pttl(key),
         KEY_NOT_EXISTS)
+      assert.strictEqual(
+        await client.pttl(key),
+        KEY_NOT_EXISTS)
+    })
+
+    it('persist', async function () {
+      const sleep = sleepx(clock)
+
+      const key = 'test:persis:1'
+      const value = 'foobar'
+      const multi = client.cb.multi()
+        .del(key)
+        .set(key, value)
+        .pexpire(key, 200)
+      assert.deepStrictEqual(
+        await promisify(multi.exec.bind(multi))(),
+        [0, 'OK', 1])
+      const ttl1 = await client.pttl(key)
+      assertRange(ttl1, [200, 150])
+
+      await sleep(100 - 200 + ttl1)
+      assert.strictEqual(
+        await client.get(key),
+        value)
+      assertRange(
+        await client.pttl(key),
+        [100, 80])
+
+      assert.strictEqual(
+        await client.persist(key),
+        1)
+      assert.strictEqual(
+        await client.ttl(key),
+        -1)
+    })
+
+    it('persist on expired key', async function () {
+      const key = 'test:persist:2'
+      const multi = client.cb.multi()
+        .del(key)
+        .set(key, 'foobar')
+        .pexpire(key, 100)
+      assert.deepStrictEqual(
+        await promisify(multi.exec.bind(multi))(),
+        [0, 'OK', 1])
+
+      await sleep(105)
+
+      assert.strictEqual(
+        await client.persist(key),
+        0)
       assert.strictEqual(
         await client.pttl(key),
         KEY_NOT_EXISTS)
