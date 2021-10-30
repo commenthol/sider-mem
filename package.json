@@ -1,6 +1,6 @@
 {
   "name": "sider-mem",
-  "version": "1.0.0-1",
+  "version": "1.0.0",
   "description": "A in-memory datastore in node for redis compatible clients",
   "keywords": [
     "redis",
