@@ -33,6 +33,11 @@ export class Cache {
     get(key: string, expectedType: string): any;
     /**
      * @param {string} key
+     * @returns {any}
+     */
+    getAny(key: string): any;
+    /**
+     * @param {string} key
      * @returns {string|null}
      */
     getType(key: string): string | null;

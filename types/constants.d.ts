@@ -13,6 +13,7 @@ export const ERR_SYNTAX: "ERR syntax error";
 export const ERR_TYPE: "WRONGTYPE Operation against a key holding the wrong kind of value";
 export const ERR_VALUE_FLOAT: "ERR value is not a valid float";
 export const ERR_WRONGPASS: "WRONGPASS invalid username-password pair or user is disabled.";
+export const ERR_NO_SUCH_KEY: "ERR no such key";
 export const NX: "NX";
 export const XX: "XX";
 export const GT: "GT";

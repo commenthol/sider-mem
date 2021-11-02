@@ -1,3 +1,4 @@
+/// <reference types="node" />
 export type CreatePromise = {
     promise: Promise<any>;
     resolve: Function;
@@ -63,7 +64,7 @@ export function getType(value: any): string;
  * @param {number|undefined} ms
  * @returns {Promise<void>}
  */
-export function sleep(ms: number | undefined): Promise<void>;
+export const sleep: typeof import("timers/promises").setTimeout;
 /**
  * @param {string|undefined} a
  * @param {string|undefined} b
@@ -88,7 +89,7 @@ export function isMatch(pattern: string): Function;
 /**
  * @returns {Promise<void>}
  */
-export function nextTick(): Promise<void>;
+export const nextTick: () => Promise<any>;
 /**
  * milliseconds to seconds conversions; ignores negative values
  * @param {number} ms

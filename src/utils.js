@@ -8,6 +8,7 @@
 
 const process = require('process')
 const crypto = require('crypto')
+const { promisify } = require('util')
 const picomatch = require('picomatch')
 const { TYPE_STRING, TYPE_HASH, TYPE_NONE } = require('./constants')
 
@@ -159,12 +160,12 @@ const isMatch = (pattern) => {
  * @param {number|undefined} ms
  * @returns {Promise<void>}
  */
-const sleep = (ms) => new Promise(resolve => setTimeout(() => resolve(), ms))
+const sleep = promisify(setTimeout)
 
 /**
  * @returns {Promise<void>}
  */
-const nextTick = () => new Promise(resolve => process.nextTick(resolve))
+const nextTick = promisify(process.nextTick)
 
 /**
  * milliseconds to seconds conversions; ignores negative values

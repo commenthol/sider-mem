@@ -25,7 +25,8 @@ const {
   isFunction,
   sleep,
   timingSafeEqual,
-  createPromise
+  createPromise,
+  nextTick
 } = require('./utils.js')
 const {
   setLogFn,
@@ -173,20 +174,28 @@ class Server {
       const req = client.nextRequest()
       if (!req) return
       const data = await this._handleRequest(req, commands, client)
-      log.debug('%j', data)
-      socket.write(data)
-      processQueuedRequest()
+      if (data !== undefined) {
+        log.debug('%j', data)
+        socket.write(data)
+      }
+      await nextTick() // allow event loop to kick in
+      return processQueuedRequest()
     }
 
     parser.on('request', async req => {
       if (client.queueRequest(req)) {
         processQueuedRequest()
+          .catch(err => log.error('processQueuedRequest %s', err.message))
       }
     })
 
     socket.on('data', (data) => {
       // log.warn('%s', data.toString())
-      parser.parse(data)
+      try {
+        parser.parse(data)
+      } catch (/** @type {any} */err) {
+        log.error('ERRPARSE %s', err.message)
+      }
     })
 
     socket.on('end', () => {

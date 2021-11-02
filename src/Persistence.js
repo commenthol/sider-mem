@@ -75,7 +75,7 @@ class Persistence {
         done()
       },
       flush: (done) => {
-        setTimeout(async () => {
+        setTimeout(() => {
           done()
         }, 10)
       }

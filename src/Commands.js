@@ -1392,10 +1392,9 @@ class Commands {
   }
 
   /**
-   * @throws {Error}
    * @param {string} subcmd
    * @param  {...any} args
-   * @returns {number|string[]|(number|string)[]}
+   * @returns {number|string[]|(number|string)[]|Error}
    */
   pubsub (subcmd, ...args) {
     subcmd = (subcmd || '').toLowerCase()
@@ -1408,7 +1407,7 @@ class Commands {
       case 'numpat':
         return this._pubsub.getNumpat()
       default:
-        throw this.unknownSubCommand('pubsub', subcmd)
+        return this.unknownSubCommand('pubsub', subcmd)
     }
   }
 

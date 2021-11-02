@@ -116,6 +116,25 @@ export class Commands {
      */
     del(...keys: any[]): number;
     /**
+     * @private
+     * @param {string} key
+     * @param {string} newkey
+     * @returns {string}
+     */
+    private _rename;
+    /**
+     * @param {string} key
+     * @param {string} newkey
+     * @returns {string}
+     */
+    rename(key: string, newkey: string): string;
+    /**
+     * @param {string} key
+     * @param {string} newkey
+     * @returns {number}
+     */
+    renamenx(key: string, newkey: string): number;
+    /**
      * @param {any} key
      * @returns {string}
      */
@@ -413,12 +432,11 @@ export class Commands {
      */
     publish(channel: string, message: string): number;
     /**
-     * @throws {Error}
      * @param {string} subcmd
      * @param  {...any} args
-     * @returns {number|string[]|(number|string)[]}
+     * @returns {number|string[]|(number|string)[]|Error}
      */
-    pubsub(subcmd: string, ...args: any[]): number | string[] | (number | string)[];
+    pubsub(subcmd: string, ...args: any[]): number | string[] | (number | string)[] | Error;
     /**
      * @param  {...string} patterns
      */

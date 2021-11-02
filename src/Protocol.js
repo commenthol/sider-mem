@@ -237,6 +237,8 @@ function writeResponse (data) {
     return data.toString()
   } else if (data === null) {
     return NIL
+  } else if (data === undefined) {
+    return data
   } else if (isInteger(data)) {
     return createIntegerResp(data)
   } else if (isArray(data)) {
