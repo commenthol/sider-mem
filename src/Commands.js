@@ -27,7 +27,8 @@ const {
   toHumanMemSize,
   isMatch,
   nextTick,
-  msToSecs
+  msToSecs,
+  getType
 } = require('./utils.js')
 const {
   OK,
@@ -52,10 +53,9 @@ const {
   KEY_NO_EXPIRY,
   TRUE,
   FALSE,
-  TYPE_NONE,
   TYPE_STRING,
   TYPE_HASH,
-  TYPE_MAP
+  TYPE_NONE
 } = require('./constants.js')
 const { logger } = require('./log.js')
 
@@ -113,7 +113,7 @@ const parseScanArgs = (args) => {
         break
       }
       case 'type':
-        type = TYPE_MAP[val]
+        type = getType(val)
         break
       default:
         log.error('%s for "%s" "%s"', ERR_SYNTAX, cmd, val)
@@ -599,7 +599,7 @@ class Commands {
    * @returns {string}
    */
   type (key) {
-    return TYPE_MAP[this._cache.getType(key) || TYPE_NONE]
+    return this._cache.getType(key) || TYPE_NONE
   }
 
   /**
@@ -643,9 +643,9 @@ class Commands {
     let counter = 0
 
     while (true) {
-      const { value = [], done } = iterator.next()
-      const [key, [, type] = []] = value
-      const isTypeMatching = parsed.type ? parsed.type === type : true
+      const { value: val = [], done } = iterator.next()
+      const [key, value] = val
+      const isTypeMatching = parsed.type ? parsed.type === getType(value) : true
       cursor++
 
       if (key && isTypeMatching && parsed.matcher(key) && this._cache.has(key)) {
@@ -901,7 +901,7 @@ class Commands {
     if (!(isString(value) || isNumber(value))) {
       throw new Error(ERR_TYPE)
     }
-    this._cache.set(key, value, TYPE_STRING)
+    this._cache.set(key, value)
     this._drain.write(SET, key, value)
     if (!isNil(timestampMs)) {
       // @ts-ignore
@@ -964,7 +964,7 @@ class Commands {
     for (let i = 0; i < keyValues.length; i += 2) {
       const key = keyValues[i]
       const value = keyValues[i + 1]
-      this._cache.set(key, value, TYPE_STRING)
+      this._cache.set(key, value)
     }
     this._drain.write('mset', ...keyValues)
     return OK
@@ -1110,7 +1110,7 @@ class Commands {
       throw new Error(ERR_NOT_INTEGER)
     }
     value += inc
-    this._cache.set(key, value, TYPE_STRING)
+    this._cache.set(key, value)
     this._drain.write(SET, key, value)
     return value
   }
@@ -1131,7 +1131,7 @@ class Commands {
       if (!(prop in obj)) cnt++
       obj[prop] = value
     }
-    this._cache.set(key, obj, TYPE_HASH)
+    this._cache.set(key, obj)
     this._drain.write('hset', key, ...fieldVals)
     return cnt
   }
@@ -1259,7 +1259,7 @@ class Commands {
         delete obj[field]
       }
     })
-    this._cache.set(key, obj, TYPE_HASH)
+    this._cache.set(key, obj)
     this._drain.write('hdel', key, ...fields)
     return cnt
   }

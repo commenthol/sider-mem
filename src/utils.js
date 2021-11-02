@@ -9,6 +9,7 @@
 const process = require('process')
 const crypto = require('crypto')
 const picomatch = require('picomatch')
+const { TYPE_STRING, TYPE_HASH, TYPE_NONE } = require('./constants')
 
 /**
  * @param {any} v
@@ -57,6 +58,22 @@ const isFunction = (v) => typeof v === 'function'
  * @returns {number}
  */
 const toNumber = v => isNaN(v) ? 0 : Number(v)
+
+/** constuctor name to type map */
+const typeMap = {
+  Number: TYPE_STRING,
+  String: TYPE_STRING,
+  Object: TYPE_HASH
+}
+
+/**
+ * @param {any} value
+ * @returns {string}
+ */
+const getType = (value) => {
+  const type = value?.constructor.name
+  return typeMap[type] || TYPE_NONE
+}
 
 /**
  * @param {[string, string[]]} param0
@@ -166,6 +183,7 @@ module.exports = {
   isNumber,
   isObject,
   isString,
+  getType,
   sleep,
   timingSafeEqual,
   toHumanMemSize,

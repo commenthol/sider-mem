@@ -55,6 +55,11 @@ export function isObject(v: any): boolean;
  */
 export function isString(v: any): boolean;
 /**
+ * @param {any} value
+ * @returns {string}
+ */
+export function getType(value: any): string;
+/**
  * @param {number|undefined} ms
  * @returns {Promise<void>}
  */

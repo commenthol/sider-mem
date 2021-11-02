@@ -7,6 +7,7 @@
 const {
   ERR_TYPE
 } = require('./constants.js')
+const { getType } = require('./utils.js')
 
 class Cache {
   /**
@@ -53,10 +54,9 @@ class Cache {
   /**
    * @param {string} key
    * @param {any} value
-   * @param {number} type
    */
-  set (key, value, type) {
-    this.map.set(key, [value, type])
+  set (key, value) {
+    this.map.set(key, value)
   }
 
   /**
@@ -74,15 +74,15 @@ class Cache {
 
   /**
    * @param {string} key
-   * @param {number} expectedType
+   * @param {string} expectedType
    * @returns {any}
    */
   get (key, expectedType) {
     if (!this.map.has(key)) {
       return null
     }
-    const [value, type] = this.map.get(key)
-    if (type !== expectedType) {
+    const value = this.map.get(key)
+    if (expectedType !== getType(value)) {
       throw new TypeError(ERR_TYPE)
     }
     return value
@@ -90,14 +90,14 @@ class Cache {
 
   /**
    * @param {string} key
-   * @returns {number|null}
+   * @returns {string|null}
    */
   getType (key) {
     if (!this.map.has(key)) {
       return null
     }
-    const [, type] = this.map.get(key)
-    return type
+    const value = this.map.get(key)
+    return getType(value)
   }
 
   /**
