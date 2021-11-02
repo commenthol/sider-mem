@@ -507,7 +507,7 @@ class Commands {
 
     while (true) {
       const { value = [], done } = iterator.next()
-      const [key, { type } = {}] = value
+      const [key, [, type] = []] = value
       const isTypeMatching = parsed.type ? parsed.type === type : true
       cursor++
 

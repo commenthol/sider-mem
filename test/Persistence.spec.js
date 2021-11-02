@@ -64,9 +64,9 @@ describe('Persistence', function () {
       assert.deepStrictEqual(
         Object.fromEntries(cache.map),
         {
-          'test:persist:0': { type: 'string', value: 'string0' },
-          'test:persist:2': { type: 'string', value: 'string2' },
-          'test:persist:3': { type: 'string', value: 'string3' }
+          'test:persist:0': ['string0', 'string'],
+          'test:persist:2': ['string2', 'string'],
+          'test:persist:3': ['string3', 'string']
         })
     })
   })

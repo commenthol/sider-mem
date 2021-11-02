@@ -43,7 +43,7 @@ class Cache {
   }
 
   set (key, value, type) {
-    this.map.set(key, { type, value })
+    this.map.set(key, [value, type])
   }
 
   has (key) {
@@ -59,7 +59,7 @@ class Cache {
     if (!this.map.has(key)) {
       return null
     }
-    const { value, type } = this.map.get(key)
+    const [value, type] = this.map.get(key)
     if (type !== expectedType) {
       throw new TypeError(ERR_TYPE)
     }
@@ -70,7 +70,7 @@ class Cache {
     if (!this.map.has(key)) {
       return null
     }
-    const { type } = this.map.get(key)
+    const [, type] = this.map.get(key)
     return type
   }
 
