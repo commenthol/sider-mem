@@ -13,7 +13,5 @@ declare const _exports: {
     Server: typeof import("./Server.js").Server;
     Persistence: typeof import("./Persistence.js").Persistence;
     Commands: typeof import("./Commands.js").Commands;
-    HamtMap: typeof HamtMap;
-    MegaMap: typeof MegaMap;
 };
 export = _exports;

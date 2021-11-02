@@ -140,8 +140,9 @@ class Server {
       } else {
         data = await commands.handleCommand(cmd, args)
       }
-    } catch (err) {
-      log.warn({ err })
+    } catch (/** @type {any} */err) {
+      log.warn('%s; %s', err?.message, cmd)
+      log.debug('%s; cmd: %s [%s]', err?.message, cmd, args)
       data = err
     }
 

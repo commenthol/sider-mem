@@ -492,6 +492,7 @@ class Commands {
       this._client.user = username
       return OK
     }
+    log.error('%s; username %s', ERR_WRONGPASS, username)
     return new Error(ERR_WRONGPASS)
   }
 
@@ -748,7 +749,7 @@ class Commands {
       }
       return new ResponseData(arr, createSimpleArrayResp)
     } catch (/** @type {any} */ err) {
-      log.warn('EXECABORT %s', err.message)
+      log.warn('EXECABORT %s', err?.message)
       return new Error(ERR_EXECABORT)
     }
   }
@@ -1392,6 +1393,7 @@ class Commands {
   }
 
   /**
+   * @throws {Error}
    * @param {string} subcmd
    * @param  {...any} args
    * @returns {number|string[]|(number|string)[]|Error}
@@ -1407,7 +1409,7 @@ class Commands {
       case 'numpat':
         return this._pubsub.getNumpat()
       default:
-        return this.unknownSubCommand('pubsub', subcmd)
+        throw this.unknownSubCommand('pubsub', subcmd)
     }
   }
 

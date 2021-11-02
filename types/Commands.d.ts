@@ -432,6 +432,7 @@ export class Commands {
      */
     publish(channel: string, message: string): number;
     /**
+     * @throws {Error}
      * @param {string} subcmd
      * @param  {...any} args
      * @returns {number|string[]|(number|string)[]|Error}

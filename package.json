@@ -17,13 +17,22 @@
   },
   "license": "MIT",
   "author": "commenthol <commenthol@gmail.com>",
+  "exports": {
+    "./HamtMap": {
+      "require": "./src/HamtMap.js"
+    },
+    "./MegaMap": {
+      "require": "./src/MegaMap.js"
+    }
+  },
   "main": "src/index.js",
   "types": "types/index.d.ts",
   "bin": {
     "sider-mem": "bin/sider-mem.js"
   },
   "scripts": {
-    "all": "npm run lint && npm t && npm run check && npm run types",
+    "all": "npm run lint && npm t && npm run build && npm run check && npm run types",
+    "build": "npx esbuild --bundle src/index.js --outdir=dist --minify --platform=node --target=esnext",
     "check": "tsc --noEmit true",
     "coverage": "c8 -r html -r text mocha",
     "dev": "DEBUG_LEVEL=debug nodemon bin/sider-mem.js --host 0.0.0.0 --port 6378",
