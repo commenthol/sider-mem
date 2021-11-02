@@ -63,7 +63,7 @@ Start with `npm run example` and browse to http://localhost:3000
 | ------------------- | ------------- | ------------------------------------------------------------ |
 | username            | "default"     | Enables authentication                                       |
 | password            | -             |                                                              |
-| log                 | _debug-level_ | Changes logger; ee.g. to use console logging `() => console` |
+| log                 | _debug-level_ | Changes logger; e.g. to use console logging `() => console` |
 | gracefulTimeout     | 100           | (ms) Server timeout on shutdown                              |
 | nextHouseKeepingSec | 30            | (s) Housekeeping interval for cleanup of expired keys        |
 | dbDir               | -             | Persistence: database directory for append only files        |
