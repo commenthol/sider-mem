@@ -36,9 +36,7 @@ const sleepx = (clock) => (ms) => isRedis
   : Promise.resolve().then(clock.tick(ms))
 
 describe('Server', function () {
-  /**
-   * @type {Server}
-   */
+  /** @type {Server} */
   let server
 
   before(function () {
@@ -1470,7 +1468,7 @@ describe('Server', function () {
   })
 
   describe('hash error', function () {
-    it('shall return wrong type if key is not an hash', async function () {
+    it('shall return wrong type error if key is not an hash', async function () {
       const key = 'test:hset:error'
       await client.del(key)
       await client.set(key, 'foo')

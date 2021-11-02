@@ -1,7 +1,11 @@
-// @ts-nocheck
 /**
  * ES6 Map compatible Wrapper for megahash
+ * @module MegaMap
+ * @copyright 2021 commenthol <commenthol@gmail.com>
+ * @license MIT
  */
+
+// @ts-nocheck
 
 const MegaHash = require('megahash')
 

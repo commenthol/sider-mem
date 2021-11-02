@@ -30,6 +30,7 @@ function app (opts) {
   const redisClient = redis.createClient({ port })
   const app = express()
 
+  // eslint-disable-next-line no-console
   redisClient.on('error', (err) => console.error('redis error %s', err))
 
   app.use(

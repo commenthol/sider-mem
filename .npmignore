@@ -3,7 +3,9 @@ coverage/
 scripts/
 examples/
 test/
+docs/
 tmp/
 *.tgz
 *.log
+*config.json
 .*

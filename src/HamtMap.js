@@ -1,5 +1,8 @@
 /**
  * ES6 Map compatible Wrapper for hamt
+ * @module HamptMap
+ * @copyright 2021 commenthol <commenthol@gmail.com>
+ * @license MIT
  */
 
 // @ts-check

@@ -15,6 +15,7 @@
   "exclude": [
     "bin",
     "coverage",
+    "docs",
     "examples",
     "node_modules",
     "test",

@@ -1,6 +1,6 @@
 {
   "name": "sider-mem",
-  "version": "1.0.0",
+  "version": "1.1.0-0",
   "description": "A in-memory datastore in node for redis compatible clients",
   "keywords": [
     "redis",
@@ -27,8 +27,10 @@
     "check": "tsc --noEmit true",
     "coverage": "c8 -r html -r text mocha",
     "dev": "DEBUG_LEVEL=debug nodemon bin/sider-mem.js --host 0.0.0.0 --port 6378",
+    "docs": "jsdoc src -r -c ./jsdoc.config.json -d docs",
     "example": "DEBUG_JSON=1 DEBUG_LEVEL=debug node examples/cluster.js",
     "lint": "eslint --fix \"**/*.js\"",
+    "prepublishOnly": "npm run all",
     "start": "DEBUG_LEVEL=debug ./bin/sider-mem.js",
     "test": "c8 mocha",
     "types": "rm -r types; tsc --emitDeclarationOnly true --noEmitOnError"

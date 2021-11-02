@@ -6,6 +6,7 @@ const redis = require('redis')
 
 const createClient = (/** @type {any} */ options) => {
   const client = redis.createClient(options)
+  const memo = {}
 
   // promisify client methods
   const proxy = new Proxy(client, {
@@ -13,7 +14,10 @@ const createClient = (/** @type {any} */ options) => {
       if (prop === 'cb') {
         return client
       } else if (typeof obj[prop] === 'function') {
-        return promisify(client[prop].bind(client))
+        const fn = memo[prop]
+          ? memo[prop]
+          : memo[prop] = promisify(client[prop].bind(client))
+        return fn
       }
       return obj[prop]
     }

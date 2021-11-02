@@ -1,3 +1,10 @@
+/**
+ * @module commandList
+ * @copyright 2015 NodeRedis
+ * @credits redis-commands/commands.json
+ * @license MIT
+ */
+
 // @ts-check
 
 /**
@@ -120,12 +127,12 @@ const commandList = {
   ping: [-1, ['stale', 'fast'], 0, 0, 0, ['@fast', '@connection']],
   // post: [-1, ['readonly', 'loading', 'stale'], 0, 0, 0, ['@read', '@slow']],
   psetex: [4, ['write', 'denyoom'], 1, 1, 1, ['@write', '@string', '@slow']],
-  // psubscribe: [-2, ['pubsub', 'noscript', 'loading', 'stale'], 0, 0, 0, ['@pubsub', '@slow']],
+  psubscribe: [-2, ['pubsub', 'noscript', 'loading', 'stale'], 0, 0, 0, ['@pubsub', '@slow']],
   // psync: [-3, ['admin', 'noscript'], 0, 0, 0, ['@admin', '@slow', '@dangerous']],
   pttl: [2, ['readonly', 'random', 'fast'], 1, 1, 1, ['@keyspace', '@read', '@fast']],
-  // publish: [3, ['pubsub', 'loading', 'stale', 'fast', 'may_replicate'], 0, 0, 0, ['@pubsub', '@fast']],
-  // pubsub: [-2, ['pubsub', 'random', 'loading', 'stale'], 0, 0, 0, ['@pubsub', '@slow']],
-  // punsubscribe: [-1, ['pubsub', 'noscript', 'loading', 'stale'], 0, 0, 0, ['@pubsub', '@slow']],
+  publish: [3, ['pubsub', 'loading', 'stale', 'fast', 'may_replicate'], 0, 0, 0, ['@pubsub', '@fast']],
+  pubsub: [-2, ['pubsub', 'random', 'loading', 'stale'], 0, 0, 0, ['@pubsub', '@slow']],
+  punsubscribe: [-1, ['pubsub', 'noscript', 'loading', 'stale'], 0, 0, 0, ['@pubsub', '@slow']],
   quit: [1, [], 0, 0, 0, []],
   // randomkey: [1, ['readonly', 'random'], 0, 0, 0, ['@keyspace', '@read', '@slow']],
   // readonly: [1, ['fast'], 0, 0, 0, ['@keyspace', '@fast']],
@@ -171,7 +178,7 @@ const commandList = {
   // sscan: [-3, ['readonly', 'random'], 1, 1, 1, ['@read', '@set', '@slow']],
   // stralgo: [-2, ['readonly', 'movablekeys'], 0, 0, 0, ['@read', '@string', '@slow']],
   strlen: [2, ['readonly', 'fast'], 1, 1, 1, ['@read', '@string', '@fast']],
-  // subscribe: [-2, ['pubsub', 'noscript', 'loading', 'stale'], 0, 0, 0, ['@pubsub', '@slow']],
+  subscribe: [-2, ['pubsub', 'noscript', 'loading', 'stale'], 0, 0, 0, ['@pubsub', '@slow']],
   substr: [4, ['readonly'], 1, 1, 1, ['@read', '@string', '@slow']],
   // sunion: [-2, ['readonly', 'sort_for_script'], 1, -1, 1, ['@read', '@set', '@slow']],
   // sunionstore: [-3, ['write', 'denyoom'], 1, -1, 1, ['@write', '@set', '@slow']],
@@ -180,9 +187,9 @@ const commandList = {
   time: [1, ['random', 'loading', 'stale', 'fast'], 0, 0, 0, ['@fast']],
   // touch: [-2, ['readonly', 'fast'], 1, -1, 1, ['@keyspace', '@read', '@fast']],
   ttl: [2, ['readonly', 'random', 'fast'], 1, 1, 1, ['@keyspace', '@read', '@fast']],
-  type: [2, ['readonly', 'fast'], 1, 1, 1, ['@keyspace', '@read', '@fast']]
+  type: [2, ['readonly', 'fast'], 1, 1, 1, ['@keyspace', '@read', '@fast']],
   // unlink: [-2, ['write', 'fast'], 1, -1, 1, ['@keyspace', '@write', '@fast']],
-  // unsubscribe: [-1, ['pubsub', 'noscript', 'loading', 'stale'], 0, 0, 0, ['@pubsub', '@slow']],
+  unsubscribe: [-1, ['pubsub', 'noscript', 'loading', 'stale'], 0, 0, 0, ['@pubsub', '@slow']]
   // unwatch: [1, ['noscript', 'loading', 'stale', 'fast'], 0, 0, 0, ['@fast', '@transaction']],
   // wait: [3, ['noscript'], 0, 0, 0, ['@keyspace', '@slow']],
   // watch: [-2, ['noscript', 'loading', 'stale', 'fast'], 1, -1, 1, ['@fast', '@transaction']],

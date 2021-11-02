@@ -21,6 +21,20 @@ export const KEY_NOT_EXISTS: -2;
 export const KEY_NO_EXPIRY: -1;
 export const TRUE: 1;
 export const FALSE: 0;
-export const TYPE_NONE: "none";
-export const TYPE_STRING: "string";
-export const TYPE_HASH: "hash";
+export const TYPE_NONE: 0;
+export const TYPE_STRING: 1;
+export const TYPE_HASH: 2;
+export namespace TYPE_MAP {
+    export { TYPE_NONE as none };
+    export { TYPE_STRING as string };
+    export { TYPE_HASH as hash };
+    export { TYPE_LIST as list };
+    export { TYPE_SET as set };
+    export { TYPE_ZSET as zset };
+    export { TYPE_STREAM as stream };
+}
+declare const TYPE_LIST: 3;
+declare const TYPE_SET: 4;
+declare const TYPE_ZSET: 5;
+declare const TYPE_STREAM: 6;
+export {};

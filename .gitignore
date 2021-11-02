@@ -1,5 +1,6 @@
 node_modules/
 coverage/
+docs/
 tmp/
 test/fixtures/large.aof
 test/fixtures/db.aof

@@ -1,4 +1,5 @@
-/*!
+/**
+ * @module Cache
  * @copyright 2021 commenthol <commenthol@gmail.com>
  * @license MIT
  */
@@ -52,7 +53,7 @@ class Cache {
   /**
    * @param {string} key
    * @param {any} value
-   * @param {string} type
+   * @param {number} type
    */
   set (key, value, type) {
     this.map.set(key, [value, type])
@@ -73,7 +74,7 @@ class Cache {
 
   /**
    * @param {string} key
-   * @param {string} expectedType
+   * @param {number} expectedType
    * @returns {any}
    */
   get (key, expectedType) {
@@ -89,7 +90,7 @@ class Cache {
 
   /**
    * @param {string} key
-   * @returns {string|null}
+   * @returns {number|null}
    */
   getType (key) {
     if (!this.map.has(key)) {

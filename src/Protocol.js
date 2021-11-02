@@ -1,11 +1,10 @@
-/*!
- * @copyright 2014 Justin Freitag <justin.freitag@gmail.com>
- * @copyright 2021 commenthol <commenthol@gmail.com>
- * @credits https://github.com/justinfreitag-zz/node-redis-protocol
- * @license MIT
- */
 /**
  * Implements the Redis RESP2 Protocol
+ * @module Protocol
+ * @copyright 2021 commenthol <commenthol@gmail.com>
+ * @copyright 2014 Justin Freitag <justin.freitag@gmail.com>
+ * @credits https://github.com/justinfreitag-zz/node-redis-protocol
+ * @license MIT
  * @see https://redis.io/topics/protocol
  */
 

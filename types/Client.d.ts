@@ -14,19 +14,23 @@ export class Client {
     laddr: string;
     user: string;
     db: number;
-    /** @type {{ [cursor: string]: Iterator<[any, any]> }} */
-    _cursor: {
-        [cursor: string]: Iterator<[any, any], any, undefined>;
-    };
+    /** @private @type {{ [cursor: string]: Iterator<[any, any]> }} */
+    private _cursor;
     _isActive: boolean;
     _isAuth: boolean;
     _hasTransaction: boolean;
-    /** @type {[cmd: string, args: any[]][] } */
-    _transaction: [cmd: string, args: any[]][];
-    /** @type { any[][] } */
-    _queue: any[][];
+    /** @private @type {[cmd: string, args: any[]][] } */
+    private _transaction;
+    /** @private @type { any[][] } */
+    private _queue;
     set isAuthenticated(arg: boolean);
+    /**
+     * @type {boolean}
+     */
     get isAuthenticated(): boolean;
+    /**
+     * @type {boolean}
+     */
     get hasTransaction(): boolean;
     startTransaction(): void;
     /**
@@ -55,6 +59,8 @@ export class Client {
      * @returns {any[]|undefined}
      */
     nextRequest(): any[] | undefined;
+    on(ev: any, fn: any): void;
+    write(data: any): void;
     end(): void;
     list(): {
         id: number;

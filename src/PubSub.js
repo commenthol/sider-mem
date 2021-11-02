@@ -1,3 +1,8 @@
+/**
+ * @copyright 2021 commenthol <commenthol@gmail.com>
+ * @license MIT
+ */
+
 const {
   createArrayResp
 } = require('./Protocol.js')
@@ -5,41 +10,48 @@ const {
   isMatch
 } = require('./utils.js')
 
+const UNSUB_EVENTS = ['close', 'error', 'timeout']
+
 /** @typedef {import('./Client.js').Client} Client */
 
 class PubSub {
   constructor () {
-    this.channels = new Map()
-    this.clients = new Map()
+    this.channelClients = new Map() // channel -> Set(Clients)
+    this.clientChannels = new Map() // client -> Set(Channel)
+    this.patternClients = new Map() // pattern -> Set(Clients)
+    this.clientPatterns = new Map() // client -> Set(Pattern)
+    this.matchers = new Map() // pattern -> matcher
   }
 
   /**
    * @param {Client} client
    * @param {string[]} channels
-   * @returns {number}
    */
   subscribe (client, channels) {
-    let cnt = 0
-    const clientChannels = this.clients.get(client) || new Set()
+    const clientChannels = this.clientChannels.get(client) || new Set()
+
+    // do unsubscribe in case of connection loss
+    if (!clientChannels.size) {
+      UNSUB_EVENTS.forEach(ev => client.on(ev, () => {
+        this.unsubscribe(client)
+      }))
+    }
+
     channels.forEach(channel => {
-      const clients = this.channels.get(channel) || new Set()
-      if (clients.size !== clients.add(client).size) {
-        cnt++
-      }
-      this.channels.set(channel, clients)
-      this.clients.set(client, clientChannels.add(channel))
+      const clients = this.channelClients.get(channel) || new Set()
+      clients.add(client)
+      this.channelClients.set(channel, clients)
+      this.clientChannels.set(client, clientChannels.add(channel))
+      client.write(createArrayResp(['subscribe', channel, clientChannels.size]))
     })
-    return cnt
   }
 
   /**
    * @param {Client} client
-   * @param {string[]} channels
-   * @returns {number}
+   * @param {string[]} [channels]
    */
   unsubscribe (client, channels) {
-    let cnt = 0
-    const clientChannels = this.clients.get(client) || new Set()
+    const clientChannels = this.clientChannels.get(client) || new Set()
 
     if (!channels || !channels.length) {
       // unsubscribe from all channels
@@ -47,40 +59,18 @@ class PubSub {
     }
 
     channels.forEach(channel => {
-      const clients = this.channels.get(channel)
+      const clients = this.channelClients.get(channel)
       clientChannels.delete(channel)
+      client.write(createArrayResp(['unsubscribe', channel, clientChannels.size]))
       if (clients) {
-        if (clients.delete(client)) {
-          cnt++
-        }
+        clients.delete(client)
         if (clients.size) {
-          this.channels.set(channel, clients)
+          this.channelClients.set(channel, clients)
         } else {
-          this.channels.delete(channel)
+          this.channelClients.delete(channel)
         }
       }
     })
-    return cnt
-  }
-
-  /**
-   * @param {Client} client
-   * @param {string[]} patterns
-   * @returns {number}
-   */
-  pSubscribe (client, patterns) {
-    const channels = this.getChannels(patterns)
-    return this.subscribe(client, channels)
-  }
-
-  /**
-   * @param {Client} client
-   * @param {string[]} patterns
-   * @returns {number}
-   */
-  pUnsubscribe (client, patterns) {
-    const channels = this.getChannels(patterns)
-    return this.unsubscribe(client, channels)
   }
 
   /**
@@ -88,12 +78,12 @@ class PubSub {
    * @returns {string[]}
    */
   getChannels (patterns) {
-    const channels = Array.from(this.channels.keys())
-    if (!patterns) {
+    const channels = Array.from(this.channelClients.keys())
+    if (!patterns || !patterns.length) {
       return channels
     }
     const matchers = patterns.map(pattern => isMatch(pattern))
-    return channels.filter(channel => matchers.some(channel))
+    return channels.filter(channel => matchers.some(matcher => matcher(channel)))
   }
 
   /**
@@ -106,9 +96,68 @@ class PubSub {
    */
   getSubscribers (channels) {
     return channels.map(channel => {
-      const clients = this.channels.get(channel)
+      const clients = this.channelClients.get(channel)
       return !clients ? [channel, 0] : [channel, clients.size]
     })
+  }
+
+  /**
+   * @param {Client} client
+   * @param {string[]} patterns
+   */
+  pSubscribe (client, patterns) {
+    const clientPatterns = this.clientPatterns.get(client) || new Set()
+
+    // do unsubscribe in case of connection loss
+    if (!clientPatterns.size) {
+      UNSUB_EVENTS.forEach(ev => client.on(ev, () => {
+        this.pUnsubscribe(client)
+      }))
+    }
+
+    patterns.forEach(pattern => {
+      const clients = this.patternClients.get(pattern) || new Set()
+      clients.add(client)
+      this.patternClients.set(pattern, clients)
+      this.clientPatterns.set(client, clientPatterns.add(pattern))
+      this.matchers.set(pattern, isMatch(pattern))
+      client.write(createArrayResp(['psubscribe', pattern, clientPatterns.size]))
+    })
+  }
+
+  /**
+   * @param {Client} client
+   * @param {string[]} [patterns]
+   */
+  pUnsubscribe (client, patterns) {
+    const clientPatterns = this.clientPatterns.get(client) || new Set()
+
+    if (!patterns || !patterns.length) {
+      // unsubscribe from all patterns
+      patterns = Array.from(clientPatterns)
+    }
+
+    patterns.forEach(pattern => {
+      const clients = this.patternClients.get(pattern)
+      clientPatterns.delete(pattern)
+      client.write(createArrayResp(['punsubscribe', pattern, clientPatterns.size]))
+      if (clients) {
+        clients.delete(client)
+        if (clients.size) {
+          this.patternClients.set(pattern, clients)
+        } else {
+          this.patternClients.delete(pattern)
+          this.matchers.delete(pattern)
+        }
+      }
+    })
+  }
+
+  /**
+   * @returns {number}
+   */
+  getNumpat () {
+    return this.patternClients.size
   }
 
   /**
@@ -117,16 +166,28 @@ class PubSub {
    * @returns {number}
    */
   publish (channel, message) {
-    const clients = this.channels.get(channel)
+    const clients = this.channelClients.get(channel)
     let cnt = 0
-    if (!clients || !clients.size) {
-      return cnt
+    if (clients && clients.size) {
+      const msg = createArrayResp(['message', channel, message])
+      clients.forEach(client => {
+        client.write(msg)
+        cnt++
+      })
     }
-    const msg = createArrayResp(['message', channel, message])
-    clients.forEach(client => {
-      client.socket.write(msg)
-      cnt++
-    })
+    for (const [pattern, matcher] of this.matchers.entries()) {
+      if (matcher(channel)) {
+        const clients = this.patternClients.get(pattern)
+        if (clients.size) {
+          const msg = createArrayResp(['pmessage', pattern, channel, message])
+          clients.forEach(client => {
+            client.write(msg)
+            cnt++
+          })
+        }
+      }
+    }
+
     return cnt
   }
 }

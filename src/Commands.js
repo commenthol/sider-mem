@@ -1,9 +1,8 @@
-/*!
- * @copyright 2021 commenthol <commenthol@gmail.com>
- * @license MIT
- */
 /**
  * Implements the Redis mem-cache for the supported commands
+ * @module Commands
+ * @copyright 2021 commenthol <commenthol@gmail.com>
+ * @license MIT
  * @see https://redis.io/commands
  */
 
@@ -55,7 +54,8 @@ const {
   FALSE,
   TYPE_NONE,
   TYPE_STRING,
-  TYPE_HASH
+  TYPE_HASH,
+  TYPE_MAP
 } = require('./constants.js')
 const { logger } = require('./log.js')
 
@@ -113,7 +113,7 @@ const parseScanArgs = (args) => {
         break
       }
       case 'type':
-        type = val
+        type = TYPE_MAP[val]
         break
       default:
         log.error('%s for "%s" "%s"', ERR_SYNTAX, cmd, val)
@@ -154,6 +154,7 @@ class Commands {
   /**
    * @param {string} cmd
    * @param {any[]} args
+   * @returns {Error}
    */
   unknownCommand (cmd, args) {
     return new Error(`ERR unknown command \`${cmd}\`, with args beginning with: ${args.map((/** @type {any} */ a) => `\`${a}\``).join(', ')}`)
@@ -162,6 +163,7 @@ class Commands {
   /**
    * @param {string} cmd
    * @param {string} subcmd
+   * @returns {Error}
    */
   unknownSubCommand (cmd, subcmd) {
     return new Error(`ERR Unknown subcommand or wrong number of arguments for '${subcmd}'. Try ${cmd.toUpperCase()} HELP.`)
@@ -170,6 +172,7 @@ class Commands {
   /**
    * @param {string} cmd
    * @param {any[]} args
+   * @throws {Error}
    */
   assertCommand (cmd, args) {
     /** @type {[arity:number, flags:string[], first:number, last:number, step:number, refs: string[]]} */
@@ -196,12 +199,11 @@ class Commands {
   /**
    * @param {string} cmd
    * @param {any} args
+   * @returns {Promise<any>}
    */
   async handleCommand (cmd, args) {
-    // @ts-ignore
     if (isFunction(this[cmd])) {
       this.assertCommand(cmd, args)
-      // @ts-ignore
       const data = await this[cmd](...args)
       // log.debug(cmd, data)
       return data
@@ -214,6 +216,7 @@ class Commands {
 
   /**
    * @param {any[]} section
+   * @returns {ResponseData}
    */
   info (...section) {
     const { version, mode, role } = this._server._config
@@ -401,6 +404,9 @@ class Commands {
     return new ResponseData(arr, createBulkStringResp)
   }
 
+  /**
+   * @returns {object}
+   */
   hello () {
     const { name, version, mode, role } = this._server._config
     return {
@@ -415,11 +421,14 @@ class Commands {
   }
 
   /**
+   * @throws {Error}
    * @param {string} subcmd
    * @param {any[]} args
-   * @return {string[]}
+   * @returns {string[]}
    */
   command (subcmd, ...args) {
+    subcmd = subcmd && subcmd.toLowerCase()
+
     /**
      * @private
      * @param {any[]} a
@@ -450,7 +459,7 @@ class Commands {
   }
 
   /**
-   * @return {string[]}
+   * @returns {string[]} [secs: string, microSecs: string]
    */
   time () {
     const now = Date.now()
@@ -461,6 +470,9 @@ class Commands {
 
   // ---- admin
 
+  /**
+   * @returns {Promise<void>}
+   */
   async shutdown () {
     return this._server.close().finally(() => process.exit())
   }
@@ -483,6 +495,7 @@ class Commands {
   }
 
   /**
+   * @throws {Error}
    * @param {number} db
    * @returns {string}
    */
@@ -496,6 +509,7 @@ class Commands {
   }
 
   /**
+   * @throws {Error}
    * @param {any} subcmd
    * @param {any[]} args
    * @returns {string|string[]|null}
@@ -533,7 +547,7 @@ class Commands {
   // ---- general
 
   /**
-   * @param {any} message
+   * @param {string} message
    * @returns {string}
    */
   ping (message) {
@@ -541,7 +555,7 @@ class Commands {
   }
 
   /**
-   * @param {any} message
+   * @param {string} message
    * @returns {string}
    */
   echo (message) {
@@ -550,6 +564,7 @@ class Commands {
 
   /**
    * @param {any[]} keys
+   * @returns {number}
    */
   exists (...keys) {
     for (const key of keys) {
@@ -562,6 +577,7 @@ class Commands {
 
   /**
    * @param {any[]} keys
+   * @returns {number}
    */
   del (...keys) {
     let count = 0
@@ -580,24 +596,33 @@ class Commands {
 
   /**
    * @param {any} key
+   * @returns {string}
    */
   type (key) {
-    return this._cache.getType(key) || TYPE_NONE
+    return TYPE_MAP[this._cache.getType(key) || TYPE_NONE]
   }
 
+  /**
+   * @returns {string} always 'OK
+   */
   flushall () {
     this._cache.clear()
     return OK
   }
 
+  /**
+   * @returns {string} always 'OK
+   */
   flushdb () {
     this._cache.clear()
     return OK
   }
 
   /**
+   * @throws {Error}
    * @param {number} cursor
    * @param {any[]} args
+   * @returns {Promise<[cursor: string, results: any[]]>}
    */
   async scan (cursor, ...args) {
     cursor = Number(cursor)
@@ -639,6 +664,9 @@ class Commands {
 
   // --- transaction
 
+  /**
+   * @returns {boolean}
+   */
   hasTransaction () {
     return this._client.hasTransaction
   }
@@ -646,20 +674,27 @@ class Commands {
   /**
    * @param {string} cmd
    * @param {any} args
+   * @returns {Promise<ResponseData|Error|string>}
    */
   handleTransaction (cmd, args) {
     if (cmd === 'exec') {
       return this.exec()
     }
     this._client.pushTransaction(cmd, args)
-    return 'QUEUED'
+    return Promise.resolve('QUEUED')
   }
 
+  /**
+   * @returns {string} always 'OK
+   */
   multi () {
     this._client.startTransaction()
     return OK
   }
 
+  /**
+   * @returns {Promise<ResponseData|Error>}
+   */
   async exec () {
     try {
       const arr = []
@@ -690,6 +725,7 @@ class Commands {
    * @param {any} key
    * @param {any} timestamp
    * @param {any} type
+   * @returns {number} FALSE: 0, TRUE: 1
    */
   expireat (key, timestamp, type) {
     return this.pexpireat(key, toNumber(timestamp) * 1000, type)
@@ -697,6 +733,7 @@ class Commands {
 
   /**
    * @param {any} key
+   * @returns {number}
    */
   expiretime (key) {
     return msToSecs(this.pexpiretime(key))
@@ -704,6 +741,7 @@ class Commands {
 
   /**
    * @param {any} key
+   * @returns {number} TTL in seconds
    */
   ttl (key) {
     return msToSecs(this.pttl(key))
@@ -713,6 +751,7 @@ class Commands {
    * @param {any} key
    * @param {number} ms
    * @param {any} type
+   * @returns {number} FALSE: 0, TRUE: 1
    */
   pexpire (key, ms, type) {
     return this.pexpireat(key, Date.now() + toNumber(ms), type)
@@ -722,6 +761,7 @@ class Commands {
    * @param {any} key
    * @param {number | undefined} timestampMs
    * @param {any} type
+   * @returns {number} FALSE: 0, TRUE: 1
    */
   pexpireat (key, timestampMs, type) {
     timestampMs = Number(timestampMs)
@@ -780,6 +820,7 @@ class Commands {
 
   /**
    * @param {any} key
+   * @returns {number}
    */
   pexpiretime (key) {
     if (!this._cache.hasExpiry(key)) {
@@ -795,6 +836,7 @@ class Commands {
 
   /**
    * @param {any} key
+   * @returns {number} TTL in milliseconds
    */
   pttl (key) {
     const timestamp = this.pexpiretime(key)
@@ -806,6 +848,7 @@ class Commands {
 
   /**
    * @param {any} key
+   * @returns {number} FALSE: 0, TRUE: 1
    */
   persist (key) {
     if (this.pttl(key) <= 0) {
@@ -823,6 +866,7 @@ class Commands {
    * @param {string} value
    * @param {string | undefined} [type]
    * @param {undefined} [amount]
+   * @returns {string|null} 'OK' on success; null on failure
    */
   set (key, value, type, amount) {
     let timestampMs
@@ -871,6 +915,7 @@ class Commands {
    * @param {any} key
    * @param {any} seconds
    * @param {any} value
+   * @returns {string|null} 'OK' on success; null on failure
    */
   setex (key, seconds, value) {
     return this.set(key, value, 'EX', seconds)
@@ -880,6 +925,7 @@ class Commands {
    * @param {any} key
    * @param {any} ms
    * @param {any} value
+   * @returns {string|null} 'OK' on success; null on failure
    */
   psetex (key, ms, value) {
     return this.set(key, value, 'PX', ms)
@@ -888,6 +934,7 @@ class Commands {
   /**
    * @param {any} key
    * @param {string} value
+   * @returns {number} length of string
    */
   append (key, value) {
     const current = this.get(key)
@@ -900,6 +947,7 @@ class Commands {
    * @param {any} key
    * @param {number} offset
    * @param {string} value
+   * @returns {number} length of string
    */
   setrange (key, offset, value) {
     const current = this.get(key)
@@ -910,6 +958,7 @@ class Commands {
 
   /**
    * @param {any[]} keyValues
+   * @returns {string} always 'OK'
    */
   mset (...keyValues) {
     for (let i = 0; i < keyValues.length; i += 2) {
@@ -923,6 +972,7 @@ class Commands {
 
   /**
    * @param {any[]} keyValues
+   * @returns {number} FALSE: 0, TRUE: 1
    */
   msetnx (...keyValues) {
     for (let i = 0; i < keyValues.length; i += 2) {
@@ -937,6 +987,7 @@ class Commands {
 
   /**
    * @param {any} key
+   * @returns {string|number|null}
    */
   get (key) {
     return (this.exists(key))
@@ -946,6 +997,7 @@ class Commands {
 
   /**
    * @param {any} key
+   * @returns {string|number|null}
    */
   getdel (key) {
     const value = this.get(key)
@@ -959,28 +1011,31 @@ class Commands {
    * @param {any} key
    * @param {any} start
    * @param {any} end
+   * @returns {string}
    */
   getrange (key, start, end) {
     assertInteger(start)
     assertInteger(end)
 
     const value = this.get(key)
-    if (value === null) {
+    if (isNil(value)) {
       return ''
     }
+    const _value = '' + value
 
-    const fixLen = (/** @type {number} */ n, corr = 0) => (n >= 0 ? n : n + value.length) + corr
+    const fixLen = (/** @type {number} */ n, corr = 0) => (n >= 0 ? n : n + _value.length) + corr
 
     const _end = fixLen(toNumber(end), 1)
     const _start = fixLen(toNumber(start))
 
-    const str = ('' + value).substring(_start, _end)
+    const str = _value.substring(_start, _end)
     return str
   }
 
   /**
    * @param {any} key
    * @param {any} value
+   * @return {string|number|null}
    */
   getset (key, value) {
     const oldValue = this.get(key)
@@ -990,6 +1045,7 @@ class Commands {
 
   /**
    * @param {any[]} keys
+   * @return {(string|number|null)[]}
    */
   mget (...keys) {
     return keys.map(key => this.get(key))
@@ -997,6 +1053,7 @@ class Commands {
 
   /**
    * @param {any} key
+   * @returns {number}
    */
   strlen (key) {
     const value = this.get(key)
@@ -1007,6 +1064,7 @@ class Commands {
 
   /**
    * @param {any} key
+   * @returns {number}
    */
   decr (key) {
     return this.incrbyfloat(key, -1)
@@ -1015,6 +1073,7 @@ class Commands {
   /**
    * @param {any} key
    * @param {number} decrement
+   * @returns {number}
    */
   decrby (key, decrement) {
     assertInteger(decrement)
@@ -1023,6 +1082,7 @@ class Commands {
 
   /**
    * @param {any} key
+   * @returns {number}
    */
   incr (key) {
     return this.incrbyfloat(key, 1)
@@ -1031,6 +1091,7 @@ class Commands {
   /**
    * @param {any} key
    * @param {any} increment
+   * @returns {number}
    */
   incrby (key, increment) {
     assertInteger(increment)
@@ -1040,6 +1101,7 @@ class Commands {
   /**
    * @param {any} key
    * @param {number} increment
+   * @returns {number}
    */
   incrbyfloat (key, increment) {
     let value = Number(this.get(key))
@@ -1058,6 +1120,7 @@ class Commands {
   /**
    * @param {any} key
    * @param {number[]} fieldVals
+   * @returns {number}
    */
   hset (key, ...fieldVals) {
     const obj = this.hgetall(key)
@@ -1077,6 +1140,7 @@ class Commands {
    * @param {any} key
    * @param {any} field
    * @param {any} value
+   * @returns {number}
    */
   hsetnx (key, field, value) {
     const exists = this.hexists(key, field)
@@ -1089,6 +1153,7 @@ class Commands {
   /**
    * @param {any} key
    * @param {string | number} field
+   * @returns {string|number|null}
    */
   hget (key, field) {
     const obj = this.hgetall(key)
@@ -1099,6 +1164,7 @@ class Commands {
   /**
    * @param {any} key
    * @param {any[]} fields
+   * @returns {(string|number|null)[]}
    */
   hmget (key, ...fields) {
     const obj = this.hgetall(key)
@@ -1112,6 +1178,7 @@ class Commands {
    *
    * @param {any} key
    * @param {any[]} fieldVals
+   * @returns {string} always 'OK'
    */
   hmset (key, ...fieldVals) {
     this.hset(key, ...fieldVals)
@@ -1120,6 +1187,7 @@ class Commands {
 
   /**
    * @param {any} key
+   * @returns {object}
    */
   hgetall (key) {
     return (this.exists(key))
@@ -1129,6 +1197,7 @@ class Commands {
 
   /**
    * @param {any} key
+   * @returns {string[]}
    */
   hkeys (key) {
     const obj = this.hgetall(key)
@@ -1137,6 +1206,7 @@ class Commands {
 
   /**
    * @param {any} key
+   * @returns {any[]}
    */
   hvals (key) {
     const obj = this.hgetall(key)
@@ -1147,6 +1217,7 @@ class Commands {
    * @param {any} key
    * @param {number} cursor
    * @param {any[]} args
+   * @returns {[string, string[]]}
    */
   hscan (key, cursor, ...args) {
     cursor = Number(cursor)
@@ -1167,6 +1238,7 @@ class Commands {
 
   /**
    * @param {any} key
+   * @returns {number}
    */
   hlen (key) {
     const obj = this.hgetall(key)
@@ -1176,6 +1248,7 @@ class Commands {
   /**
    * @param {any} key
    * @param {any[]} fields
+   * @returns {number}
    */
   hdel (key, ...fields) {
     const obj = this.hgetall(key)
@@ -1194,6 +1267,7 @@ class Commands {
   /**
    * @param {any} key
    * @param {string} field
+   * @returns {number} FALSE: 0, TRUE: 1
    */
   hexists (key, field) {
     const obj = this.hgetall(key)
@@ -1206,6 +1280,7 @@ class Commands {
    * @param {any} key
    * @param {any} field
    * @param {number} increment
+   * @returns {number}
    */
   hincrby (key, field, increment) {
     let value = this.hexists(key, field)
@@ -1226,6 +1301,7 @@ class Commands {
    * @param {any} key
    * @param {any} field
    * @param {number} increment
+   * @returns {number}
    */
   hincrbyfloat (key, field, increment) {
     let value = this.hexists(key, field)
@@ -1245,6 +1321,7 @@ class Commands {
   /**
    * @param {any} key
    * @param {any} field
+   * @returns {number}
    */
   hstrlen (key, field) {
     const value = this.hget(key, field)
@@ -1257,10 +1334,9 @@ class Commands {
 
   /**
    * @param  {...string} patterns
-   * @returns {number}
    */
   psubscribe (...patterns) {
-    return this._pubsub.pSubscribe(this._client, patterns)
+    this._pubsub.pSubscribe(this._client, patterns)
   }
 
   /**
@@ -1272,31 +1348,46 @@ class Commands {
     return this._pubsub.publish(channel, message)
   }
 
-  pubsub () {
+  /**
+   * @throws {Error}
+   * @param {string} subcmd
+   * @param  {...any} args
+   * @returns {number|string[]|(number|string)[]}
+   */
+  pubsub (subcmd, ...args) {
+    subcmd = subcmd && subcmd.toLowerCase()
+
+    switch (subcmd) {
+      case 'channels':
+        return this._pubsub.getChannels(args)
+      case 'numsub':
+        return this._pubsub.getSubscribers(args).flat()
+      case 'numpat':
+        return this._pubsub.getNumpat()
+      default:
+        throw this.unknownSubCommand('pubsub', subcmd)
+    }
   }
 
   /**
    * @param  {...string} patterns
-   * @returns {number}
    */
   punsubscribe (...patterns) {
-    return this._pubsub.pUnsubscribe(this._client, patterns)
+    this._pubsub.pUnsubscribe(this._client, patterns)
   }
 
   /**
    * @param  {...string} channels
-   * @returns {number}
    */
   subscribe (...channels) {
-    return this._pubsub.subscribe(this._client, channels)
+    this._pubsub.subscribe(this._client, channels)
   }
 
   /**
    * @param  {...string} channels
-   * @returns {number}
    */
   unsubscribe (...channels) {
-    return this._pubsub.unsubscribe(this._client, channels)
+    this._pubsub.unsubscribe(this._client, channels)
   }
 }
 

@@ -1,3 +1,9 @@
+/**
+ * @module Server
+ * @copyright 2021 commenthol <commenthol@gmail.com>
+ * @license MIT
+ */
+
 const process = require('process')
 const net = require('net')
 const path = require('path')
@@ -49,13 +55,13 @@ let log
 class Server {
   /**
    * @param {{
-   *  username?: string,
-   *  password?: string,
-   *  log?: function,
-   *  gracefulTimeout?: number,
-   *  maxBufferLength?: number,
-   *  HashMap?: MapConstructor,
-   *  nextHouseKeepingSec?: number,
+   *  username?: string;
+   *  password?: string;
+   *  log?: function;
+   *  gracefulTimeout?: number;
+   *  maxBufferLength?: number;
+   *  HashMap?: MapConstructor;
+   *  nextHouseKeepingSec?: number;
    *  dbDir?: string
    * }} options
    */
@@ -92,12 +98,12 @@ class Server {
     this._pubsub = new PubSub()
     this._store = new Persistence({ filename, cache: this._cache })
 
+    /** @type {Set<Socket>} */
     this._sockets = new Set()
     this._isShutdown = false
 
     this._needsAuth = password !== undefined
     /**
-     *
      * @param {{ username?: string, password?: string }} auth
      * @returns
      */
@@ -185,6 +191,7 @@ class Server {
 
     socket.on('end', () => {
       log.info('client disconnected %s', client.addr)
+      socket.destroy()
     })
 
     /* c8 ignore next 7 */
@@ -194,6 +201,7 @@ class Server {
 
     socket.on('timeout', () => {
       log.info('timeout')
+      socket.destroy()
     })
   }
 
@@ -201,7 +209,7 @@ class Server {
    * @param {{
    *  socket?: Socket,
    *  host?: string | undefined;
-   *  port?: string;
+   *  port?: number;
    * }} options
    */
   async listen (options) {
@@ -241,6 +249,9 @@ class Server {
     return promise
   }
 
+  /**
+   * @returns {Promise<void>}
+   */
   async close () {
     const { promise, reject, resolve } = createPromise()
     if (this._isShutdown) return
@@ -250,6 +261,7 @@ class Server {
       log.info('server closing open connections %s', this._sockets.size)
       await sleep(this._opts.gracefulTimeout)
       for (const socket of this._sockets) {
+        socket.removeAllListeners()
         socket.destroy()
       }
     }

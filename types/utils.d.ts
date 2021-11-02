@@ -6,7 +6,7 @@ export type CreatePromise = {
 /**
  * @param {[string, string[]]} param0
  * @param {boolean} [lowerRest=false]
- * @returns
+ * @returns {string}
  */
 export function capitalize([first, ...rest]: [string, string[]], lowerRest?: boolean | undefined): string;
 /**
@@ -62,6 +62,7 @@ export function sleep(ms: number | undefined): Promise<void>;
 /**
  * @param {string|undefined} a
  * @param {string|undefined} b
+ * @returns {boolean}
  */
 export function timingSafeEqual(a: string | undefined, b: string | undefined): boolean;
 /**

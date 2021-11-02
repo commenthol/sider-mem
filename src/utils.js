@@ -1,3 +1,9 @@
+/**
+ * @module utils
+ * @copyright 2021 commenthol <commenthol@gmail.com>
+ * @license MIT
+ */
+
 // @ts-check
 
 const process = require('process')
@@ -55,7 +61,7 @@ const toNumber = v => isNaN(v) ? 0 : Number(v)
 /**
  * @param {[string, string[]]} param0
  * @param {boolean} [lowerRest=false]
- * @returns
+ * @returns {string}
  */
 const capitalize = ([first, ...rest], lowerRest = false) =>
   first.toUpperCase() +
@@ -64,6 +70,7 @@ const capitalize = ([first, ...rest], lowerRest = false) =>
 /**
  * @param {string|undefined} a
  * @param {string|undefined} b
+ * @returns {boolean}
  */
 function timingSafeEqual (a, b) {
   const key = crypto.randomBytes(32)

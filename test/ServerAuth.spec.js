@@ -1,6 +1,5 @@
 // @ts-nocheck
 
-const process = require('process')
 const assert = require('assert/strict')
 const log = require('debug')('test')
 const { Server } = require('..')
@@ -12,7 +11,7 @@ const { strictEqual } = assert
 
 const PORT = 6380
 
-const clientPort = process.env.PORT || PORT
+const clientPort = /* process.env.PORT || */ PORT
 
 describe('Server authentication', function () {
   const username = 'alice'
@@ -74,7 +73,10 @@ describe('Server bad authentication', function () {
       cnt++
       cnt === 1 && strictEqual(err.message, 'WRONGPASS invalid username-password pair or user is disabled.')
       cnt === 2 && strictEqual(err.message, 'Ready check failed: NOAUTH Authentication required.')
-      cnt === 2 && done()
+      if (cnt === 2) {
+        client.quit()
+        done()
+      }
     })
   })
 
@@ -82,6 +84,7 @@ describe('Server bad authentication', function () {
     const client = createClient({ port: clientPort })
     client.on('error', (err) => {
       strictEqual(err.message, 'Ready check failed: NOAUTH Authentication required.')
+      client.quit()
       done()
     })
   })

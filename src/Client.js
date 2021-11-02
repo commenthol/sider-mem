@@ -1,3 +1,7 @@
+/**
+ * @module Client
+ */
+
 /* eslint-disable camelcase */
 
 // @ts-check
@@ -37,14 +41,14 @@ class Client {
     this.laddr = toAddress(socket.localAddress, socket.localPort)
     this.user = USERNAME_DEFAULT
     this.db = 0
-    /** @type {{ [cursor: string]: Iterator<[any, any]> }} */
+    /** @private @type {{ [cursor: string]: Iterator<[any, any]> }} */
     this._cursor = {}
     this._isActive = true
     this._isAuth = false
     this._hasTransaction = false
-    /** @type {[cmd: string, args: any[]][] } */
+    /** @private @type {[cmd: string, args: any[]][] } */
     this._transaction = []
-    /** @type { any[][] } */
+    /** @private @type { any[][] } */
     this._queue = []
   }
 
@@ -52,10 +56,16 @@ class Client {
     this._isAuth = flag
   }
 
+  /**
+   * @type {boolean}
+   */
   get isAuthenticated () {
     return this._isAuth
   }
 
+  /**
+   * @type {boolean}
+   */
   get hasTransaction () {
     return this._hasTransaction
   }
@@ -115,6 +125,15 @@ class Client {
    */
   nextRequest () {
     return this._isActive ? this._queue.shift() : undefined
+  }
+
+  on (ev, fn) {
+    this.socket.on(ev, fn)
+  }
+
+  write (data) {
+    if (this.socket.destroyed) return
+    this.socket.write(data)
   }
 
   end () {

@@ -18,9 +18,9 @@ export class Cache {
     /**
      * @param {string} key
      * @param {any} value
-     * @param {string} type
+     * @param {number} type
      */
-    set(key: string, value: any, type: string): void;
+    set(key: string, value: any, type: number): void;
     /**
      * @param {string} key
      * @returns {boolean}
@@ -28,23 +28,29 @@ export class Cache {
     has(key: string): boolean;
     /**
      * @param {string} key
-     * @param {string} expectedType
+     * @param {number} expectedType
      * @returns {any}
      */
-    get(key: string, expectedType: string): any;
+    get(key: string, expectedType: number): any;
     /**
      * @param {string} key
-     * @returns {string|null}
+     * @returns {number|null}
      */
-    getType(key: string): string | null;
+    getType(key: string): number | null;
     /**
      * @param {string} key
      * @returns {boolean}
      */
     delete(key: string): boolean;
+    /**
+     * @returns {number}
+     */
     size(): number;
     clear(): void;
-    iterator(): IterableIterator<[any, any]>;
+    /**
+     * @returns {Iterator<any,any>}
+     */
+    iterator(): Iterator<any, any>;
     /**
      * @param {string} key
      * @returns {boolean}

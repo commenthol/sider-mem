@@ -5,6 +5,7 @@ const path = require('path')
 const fsp = require('fs/promises')
 const { Persistence } = require('../src/Persistence.js')
 const { Cache } = require('../src/Cache.js')
+const { TYPE_STRING } = require('../src/constants.js')
 const { nextTick } = require('../src/utils.js')
 const log = require('debug')('test:persistence')
 
@@ -50,7 +51,7 @@ describe('Persistence', function () {
       const store = new Persistence({ filename, cache })
       await store.load()
       assert.strictEqual(
-        cache.get('test:persist:' + count, 'string'),
+        cache.get('test:persist:' + count, TYPE_STRING),
         'string' + count
       )
     })
@@ -73,9 +74,9 @@ describe('Persistence', function () {
       assert.deepStrictEqual(
         Object.fromEntries(cache.map),
         {
-          'test:persist:0': ['string0', 'string'],
-          'test:persist:2': ['string2', 'string'],
-          'test:persist:3': ['string3', 'string']
+          'test:persist:0': ['string0', TYPE_STRING],
+          'test:persist:2': ['string2', TYPE_STRING],
+          'test:persist:3': ['string3', TYPE_STRING]
         })
     })
   })

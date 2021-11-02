@@ -28,9 +28,24 @@ const KEY_NO_EXPIRY = -1
 const TRUE = 1
 const FALSE = 0
 
-const TYPE_NONE = 'none'
-const TYPE_STRING = 'string'
-const TYPE_HASH = 'hash'
+const TYPE_NONE = 0
+const TYPE_STRING = 1
+const TYPE_HASH = 2
+const TYPE_LIST = 3
+const TYPE_SET = 4
+const TYPE_ZSET = 5
+const TYPE_STREAM = 6
+
+const TYPE_MAP = {
+  none: TYPE_NONE,
+  string: TYPE_STRING,
+  hash: TYPE_HASH,
+  list: TYPE_LIST,
+  set: TYPE_SET,
+  zset: TYPE_ZSET,
+  stream: TYPE_STREAM
+}
+Object.assign(TYPE_MAP, Object.entries(TYPE_MAP).reduce((o, [k, v]) => { o[v] = k; return o }, {}))
 
 module.exports = {
   OK,
@@ -58,5 +73,6 @@ module.exports = {
   FALSE,
   TYPE_NONE,
   TYPE_STRING,
-  TYPE_HASH
+  TYPE_HASH,
+  TYPE_MAP
 }

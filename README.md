@@ -7,13 +7,13 @@ Supports:
 - expiry ([expire][], [ttl][], [pexpire][], [pttl][], ...)
 - strings ([set][], [mset][], [get][], [mget][], ...)
 - hashes ([hset][], [hmset][], [hget][], [hgetall][], ...)
+- publish/ subscribe ([publish][], [subscribe][], [psubscribe][], ...)
 - persistence
 
 Does not (yet) support:
 - transactions (rollback on error)
 - sets
 - streams
-- publish/ subscribe
 - partitioning
 - replication
 
@@ -133,7 +133,11 @@ Start with `npm run example` and browse to http://localhost:3000
 - [pexpiretime][]
 - [ping][]
 - [psetex][]
+- [psubscribe][]
 - [pttl][]
+- [publish][]
+- [pubsub][]
+- [punsubscribe][]
 - [quit][]
 - [scan][]
 - [select][]
@@ -143,9 +147,11 @@ Start with `npm run example` and browse to http://localhost:3000
 - [setrange][]
 - [shutdown][]
 - [strlen][]
+- [subscribe][]
 - [substr][]
 - [ttl][]
 - [type][]
+- [unsubscribe][]
 
 </details>
 
@@ -216,7 +222,11 @@ Start with `npm run example` and browse to http://localhost:3000
 [pexpiretime]: https://redis.io/commands/pexpiretime
 [ping]: https://redis.io/commands/ping
 [psetex]: https://redis.io/commands/psetex
+[psubscribe]: https://redis.io/commands/psubscribe
 [pttl]: https://redis.io/commands/pttl
+[publish]: https://redis.io/commands/publish
+[pubsub]: https://redis.io/commands/pubsub
+[punsubscribe]: https://redis.io/commands/punsubscribe
 [quit]: https://redis.io/commands/quit
 [scan]: https://redis.io/commands/scan
 [select]: https://redis.io/commands/select
@@ -226,6 +236,8 @@ Start with `npm run example` and browse to http://localhost:3000
 [setrange]: https://redis.io/commands/setrange
 [shutdown]: https://redis.io/commands/shutdown
 [strlen]: https://redis.io/commands/strlen
+[subscribe]: https://redis.io/commands/subscribe
 [substr]: https://redis.io/commands/substr
 [ttl]: https://redis.io/commands/ttl
 [type]: https://redis.io/commands/type
+[unsubscribe]: https://redis.io/commands/unsubscribe

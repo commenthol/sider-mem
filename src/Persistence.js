@@ -1,3 +1,9 @@
+/**
+ * @module Persistence
+ * @copyright 2021 commenthol <commenthol@gmail.com>
+ * @license MIT
+ */
+
 const fs = require('fs')
 const { pipeline } = require('stream/promises')
 const { Transform } = require('stream')

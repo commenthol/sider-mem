@@ -3,13 +3,13 @@ export type Socket = import('node:net').Socket;
 export class Server {
     /**
      * @param {{
-     *  username?: string,
-     *  password?: string,
-     *  log?: function,
-     *  gracefulTimeout?: number,
-     *  maxBufferLength?: number,
-     *  HashMap?: MapConstructor,
-     *  nextHouseKeepingSec?: number,
+     *  username?: string;
+     *  password?: string;
+     *  log?: function;
+     *  gracefulTimeout?: number;
+     *  maxBufferLength?: number;
+     *  HashMap?: MapConstructor;
+     *  nextHouseKeepingSec?: number;
      *  dbDir?: string
      * }} options
      */
@@ -37,11 +37,11 @@ export class Server {
     _cache: Cache;
     _pubsub: PubSub;
     _store: Persistence;
-    _sockets: Set<any>;
+    /** @type {Set<Socket>} */
+    _sockets: Set<Socket>;
     _isShutdown: boolean;
     _needsAuth: boolean;
     /**
-     *
      * @param {{ username?: string, password?: string }} auth
      * @returns
      */
@@ -67,16 +67,19 @@ export class Server {
      * @param {{
      *  socket?: Socket,
      *  host?: string | undefined;
-     *  port?: string;
+     *  port?: number;
      * }} options
      */
     listen(options: {
         socket?: net.Socket | undefined;
         host?: string | undefined;
-        port?: string | undefined;
+        port?: number | undefined;
     }): Promise<any>;
     _server: net.Server | undefined;
-    close(): Promise<any>;
+    /**
+     * @returns {Promise<void>}
+     */
+    close(): Promise<void>;
 }
 import { Cache } from "./Cache.js";
 import { PubSub } from "./PubSub.js";
