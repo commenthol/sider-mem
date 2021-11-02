@@ -67,6 +67,7 @@ Start with `npm run example` and browse to http://localhost:3000
 | gracefulTimeout     | 100           | (ms) Server timeout on shutdown                              |
 | nextHouseKeepingSec | 30            | (s) Housekeeping interval for cleanup of expired keys        |
 | dbDir               | -             | Persistence: database directory for append only files        |
+| HashMap             | [Map][Map]    | Use a different hash-map implementation than [ES6 Map][Map]. See `src/HampMap.js` and `src/MegaMap.js` for possible implementations |
 
 ### server.listen()
 
@@ -160,6 +161,8 @@ Start with `npm run example` and browse to http://localhost:3000
 [^redis]: Redis is a trademark of Redis Ltd. Any rights therein are reserved to Redis Ltd. Any use by this documentation is for referential purposes only and does not indicate any sponsorship, endorsement or affiliation between Redis and the author(s).
 
 [MIT]: ./LICENSE
+
+[Map]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map
 
 [redis]: https://redis.io
 

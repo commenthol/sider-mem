@@ -6,6 +6,7 @@ const process = require('process')
 const sinon = require('sinon')
 const { promisify } = require('util')
 const { Server } = require('..')
+// const { HamtMap, MegaMap } = require('..')
 const { sleep } = require('../src/utils.js')
 const {
   createClient,
@@ -37,7 +38,7 @@ describe('Server', function () {
 
   before(function () {
     const opts = { }
-    // const opts = { log: () => console }
+    // const opts = { HashMap: HamtMap, log: () => console }
     server = new Server(opts)
     return server.listen({ port: PORT })
   })

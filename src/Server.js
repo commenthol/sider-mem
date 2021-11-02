@@ -97,6 +97,7 @@ class Server {
         data = await commands.handleCommand(cmd, args)
       }
     } catch (err) {
+      log.warn({ err })
       data = err
     }
 

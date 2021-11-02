@@ -924,6 +924,7 @@ class Commands {
         delete obj[field]
       }
     })
+    this._cache.set(key, obj, TYPE_HASH)
     this._drain.write('hdel', key, ...fields)
     return cnt
   }
