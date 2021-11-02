@@ -10,6 +10,9 @@ const { nextTick } = require('../src/utils.js')
 const log = require('debug')('test:persistence')
 
 describe('Persistence', function () {
+  // eslint-disable-next-line eqeqeq
+  if (process.env.PORT == 6379) return
+
   describe('100k keys', function () {
     // this.timeout(15000)
 

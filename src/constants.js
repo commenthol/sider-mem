@@ -16,6 +16,7 @@ const ERR_EXECABORT = 'EXECABORT Transaction discarded because of previous error
 const ERR_CLIENT_NAMES = 'ERR Client names cannot contain spaces, newlines or special characters.'
 const ERR_CURSOR = 'ERR invalid cursor'
 const ERR_DB_INDEX = 'ERR DB index is out of range'
+const ERR_NO_SUCH_KEY = 'ERR no such key'
 
 const NX = 'NX'
 const XX = 'XX'
@@ -52,6 +53,7 @@ module.exports = {
   ERR_TYPE,
   ERR_VALUE_FLOAT,
   ERR_WRONGPASS,
+  ERR_NO_SUCH_KEY,
   NX,
   XX,
   GT,

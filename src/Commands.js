@@ -45,6 +45,7 @@ const {
   ERR_VALUE_FLOAT,
   ERR_WRONGPASS,
   ERR_EXECABORT,
+  ERR_NO_SUCH_KEY,
   NX,
   XX,
   GT,
@@ -427,7 +428,7 @@ class Commands {
    * @returns {string[]}
    */
   command (subcmd, ...args) {
-    subcmd = subcmd && subcmd.toLowerCase()
+    subcmd = (subcmd || '').toLowerCase()
 
     /**
      * @private
@@ -592,6 +593,48 @@ class Commands {
       this._drain.write('del', ...deletedKeys)
     }
     return count
+  }
+
+  /**
+   * @private
+   * @param {string} key
+   * @param {string} newkey
+   * @returns {string}
+   */
+  _rename (key, newkey) {
+    const value = this._cache.getAny(key)
+    this._cache.set(newkey, value)
+    this._cache.delete(key)
+    this._drain.write('rename', key, newkey)
+    return OK
+  }
+
+  /**
+   * @param {string} key
+   * @param {string} newkey
+   * @returns {string}
+   */
+  rename (key, newkey) {
+    if (!this.exists(key)) {
+      throw new Error(ERR_NO_SUCH_KEY)
+    }
+    return this._rename(key, newkey)
+  }
+
+  /**
+   * @param {string} key
+   * @param {string} newkey
+   * @returns {number}
+   */
+  renamenx (key, newkey) {
+    if (!this.exists(key)) {
+      throw new Error(ERR_NO_SUCH_KEY)
+    }
+    if (this.exists(newkey)) {
+      return FALSE
+    }
+    this._rename(key, newkey)
+    return TRUE
   }
 
   /**
@@ -1355,7 +1398,7 @@ class Commands {
    * @returns {number|string[]|(number|string)[]}
    */
   pubsub (subcmd, ...args) {
-    subcmd = subcmd && subcmd.toLowerCase()
+    subcmd = (subcmd || '').toLowerCase()
 
     switch (subcmd) {
       case 'channels':

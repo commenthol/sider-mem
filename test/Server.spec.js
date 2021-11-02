@@ -660,6 +660,81 @@ describe('Server', function () {
     })
   })
 
+  describe('rename', function () {
+    const value = 'watnana'
+    before(async function () {
+      await client.flushall()
+    })
+
+    it('rename', async function () {
+      await client.set('test:rename:1', value)
+      strictEqual(
+        await client.rename('test:rename:1', 'test:renamed:1'),
+        'OK'
+      )
+      strictEqual(
+        await client.get('test:rename:1'),
+        null
+      )
+      strictEqual(
+        await client.get('test:renamed:1'),
+        value
+      )
+    })
+
+    it('rename on undefined key', async function () {
+      await assertError(async () => {
+        await client.rename('test:rename:notthere', 'test:renamed:1')
+      }, 'ERR no such key')
+      strictEqual(
+        await client.get('test:renamed:1'),
+        value
+      )
+    })
+
+    it('renamenx', async function () {
+      await client.set('test:renamenx:2', value + '2')
+      strictEqual(
+        await client.renamenx('test:renamenx:2', 'test:renamednx:2'),
+        1
+      )
+      strictEqual(
+        await client.get('test:renamenx:2'),
+        null
+      )
+      strictEqual(
+        await client.get('test:renamednx:2'),
+        value + '2'
+      )
+    })
+
+    it('renamenx on undefined key', async function () {
+      await assertError(async () => {
+        await client.renamenx('test:renamenx:notthere', 'test:renamednx:2')
+      }, 'ERR no such key')
+      strictEqual(
+        await client.get('test:renamednx:2'),
+        value + '2'
+      )
+    })
+
+    it('renamenx on defined newkey', async function () {
+      await client.set('test:renamenx:3', value + '3')
+      strictEqual(
+        await client.renamenx('test:renamenx:3', 'test:renamednx:2'),
+        0
+      )
+      strictEqual(
+        await client.get('test:renamednx:2'),
+        value + '2'
+      )
+      strictEqual(
+        await client.get('test:renamenx:3'),
+        value + '3'
+      )
+    })
+  })
+
   describe('expire', function () {
     let clock
     beforeEach(function () {
@@ -1518,6 +1593,9 @@ describe('Client quit', function () {
 })
 
 describe('Server with persistence', function () {
+  // eslint-disable-next-line eqeqeq
+  if (process.env.PORT == 6379) return
+
   const dbDir = path.resolve(__dirname, 'fixtures')
   const baseFilename = path.resolve(dbDir, 'db')
 

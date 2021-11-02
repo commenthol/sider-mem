@@ -90,6 +90,14 @@ class Cache {
 
   /**
    * @param {string} key
+   * @returns {any}
+   */
+  getAny (key) {
+    return this.map.get(key)
+  }
+
+  /**
+   * @param {string} key
    * @returns {string|null}
    */
   getType (key) {
