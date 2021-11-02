@@ -1,47 +1,101 @@
+// @ts-check
+
 const process = require('process')
 const crypto = require('crypto')
 const picomatch = require('picomatch')
 
-const isNil = v => v === null || v === undefined
+/**
+ * @param {any} v
+ * @returns {boolean}
+ */
+const isNil = (v) => v === null || v === undefined
 
-const isString = v => typeof v === 'string'
+/**
+ * @param {any} v
+ * @returns {boolean}
+ */
+const isString = (v) => typeof v === 'string'
 
-const isNumber = v => typeof v === 'number'
+/**
+ * @param {any} v
+ * @returns {boolean}
+ */
+const isNumber = (v) => typeof v === 'number'
 
-const isInteger = v => isNumber(v) ? v === Math.floor(v) : false
+/**
+ * @param {any} v
+ * @returns {boolean}
+ */
+const isInteger = (v) => isNumber(v) ? v === Math.floor(v) : false
 
-const isArray = v => Array.isArray(v)
+/**
+ * @param {any} v
+ * @returns {boolean}
+ */
+const isArray = (v) => Array.isArray(v)
 
-const isObject = v => !isNil(v) && typeof v === 'object'
+/**
+ * @param {any} v
+ * @returns {boolean}
+ */
+const isObject = (v) => !isNil(v) && typeof v === 'object'
 
-const isFunction = v => typeof v === 'function'
+/**
+ * @param {any} v
+ * @returns {boolean}
+ */
+const isFunction = (v) => typeof v === 'function'
 
-const toNumber = v => isNaN(v) ? undefined : Number(v)
+/**
+ * @param {any} v
+ * @returns {number}
+ */
+const toNumber = v => isNaN(v) ? 0 : Number(v)
 
+/**
+ * @param {[string, string[]]} param0
+ * @param {boolean} [lowerRest=false]
+ * @returns
+ */
 const capitalize = ([first, ...rest], lowerRest = false) =>
   first.toUpperCase() +
   (lowerRest ? rest.join('').toLowerCase() : rest.join(''))
 
+/**
+ * @param {string|undefined} a
+ * @param {string|undefined} b
+ */
 function timingSafeEqual (a, b) {
   const key = crypto.randomBytes(32)
-  const toHmac = (str) => crypto.createHmac('sha1', key).update(str).digest()
+  const toHmac = (str = '') => crypto.createHmac('sha1', key).update(str).digest()
   return crypto.timingSafeEqual(toHmac(a), toHmac(b))
 }
 
-// const uuid4 = () =>
-//   ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
-//     (c ^ (crypto.randomBytes(1)[0] & (15 >> (c / 4)))).toString(16)
-//   )
-
+/**
+ * @typedef {object} CreatePromise
+ * @property {Promise<any>} promise
+ * @property {function} resolve
+ * @property {function} reject
+ */
+/**
+ * @returns {CreatePromise}
+ */
 const createPromise = () => {
   const p = {}
   p.promise = new Promise((resolve, reject) => {
+    // @ts-ignore
     p.resolve = resolve
+    // @ts-ignore
     p.reject = reject
   })
+  // @ts-ignore
   return p
 }
 
+/**
+ * @param {number} size
+ * @returns {string}
+ */
 const toHumanMemSize = (size) => {
   const units = ['', 'K', 'M', 'G']
   const divider = 1024
@@ -54,7 +108,7 @@ const toHumanMemSize = (size) => {
   return tmp.toFixed(3) + (units[cnt] || '')
 }
 
-const escapeRegExp = string => string
+const escapeRegExp = (/** @type {string} */ string) => string
   .replace(/[|\\{}()^$+.]/g, '\\$&')
   .replace(/\\(\\[*?[\]])/g, '$1') // remove double-escaping
 const MATCH_OPTS = {
@@ -67,16 +121,32 @@ const MATCH_OPTS = {
   noquantifiers: true,
   posix: false
 }
+/**
+ * @param {string} pattern
+ * @returns {function} (string) => boolean
+ */
 const isMatch = (pattern) => {
   const escapedPattern = escapeRegExp(pattern)
   // console.log(picomatch.parse(escapedPattern, MATCH_OPTS))
   return picomatch(escapedPattern, MATCH_OPTS)
 }
 
+/**
+ * @param {number|undefined} ms
+ * @returns {Promise<void>}
+ */
 const sleep = (ms) => new Promise(resolve => setTimeout(() => resolve(), ms))
 
+/**
+ * @returns {Promise<void>}
+ */
 const nextTick = () => new Promise(resolve => process.nextTick(resolve))
 
+/**
+ * milliseconds to seconds conversions; ignores negative values
+ * @param {number} ms
+ * @returns {number}
+ */
 const msToSecs = (ms) => ms > 0 ? Math.floor(ms / 1000) : ms
 
 module.exports = {

@@ -3,7 +3,9 @@
  * @license MIT
  */
 
-const assert = require('assert')
+// @ts-nocheck
+
+const assert = require('assert/strict')
 const {
   NIL,
   RequestParser,
@@ -14,7 +16,7 @@ const {
   createIntegerResp,
   createBulkStringResp,
   createObjectResp
-} = require('../src')
+} = require('../src/index.js')
 
 describe('Protocol', function () {
   describe('createArrayResp', function () {
@@ -138,6 +140,9 @@ describe('Protocol', function () {
   })
 
   describe('RequestParser', function () {
+    /**
+     * @type {RequestParser}
+     */
     let parser
 
     beforeEach(function () {
@@ -180,7 +185,7 @@ describe('Protocol', function () {
       parser.once('request', function (request) {
         assert.equal(request[0], 'OK')
         assert.equal(request[1], 'FOO')
-        assert.equal(request[2], '42')
+        assert.equal(request[2], 42)
         assert.equal(request[3], 'BAR')
         assert.equal(request[4].message, 'OH')
         done()
@@ -197,7 +202,7 @@ describe('Protocol', function () {
       parser.once('request', function (request) {
         assert.equal(request[0], 'OK')
         assert.equal(request[1], 'FOO')
-        assert.equal(request[2], '42')
+        assert.equal(request[2], 42)
         done()
       })
       parser.parse(Buffer.from('*3\r\n+OK\r\n'))

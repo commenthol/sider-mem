@@ -1,8 +1,10 @@
-const assert = require('assert')
+// @ts-nocheck
+
+const assert = require('assert/strict')
 const { promisify } = require('util')
 const redis = require('redis')
 
-const createClient = options => {
+const createClient = (/** @type {any} */ options) => {
   const client = redis.createClient(options)
 
   // promisify client methods

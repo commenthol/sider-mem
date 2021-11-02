@@ -16,6 +16,7 @@ function cli (cmmds, argv = process.argv.slice(2)) {
   }, {})
   while (argv.length) {
     const arg = argv.shift()
+    // @ts-ignore
     const found = map[arg]
     if (found) {
       cmd.hasArgs = true
@@ -46,11 +47,13 @@ async function main () {
     password: PASSWORD,
     ...cli(cmmds)
   }
+  // @ts-ignore
   if (options.help) {
     console.log(options.helptext)
     return
   }
 
+  // @ts-ignore
   const { username, password, host, port, dbDir } = options
   const server = new Server({ username, password, dbDir })
   await server.listen({ host, port })

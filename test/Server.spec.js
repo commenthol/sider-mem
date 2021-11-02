@@ -1,11 +1,13 @@
-const assert = require('assert')
+// @ts-nocheck
+
+const assert = require('assert/strict')
 const log = require('debug')('test:server')
 const fsp = require('fs/promises')
 const path = require('path')
 const process = require('process')
 const sinon = require('sinon')
 const { promisify } = require('util')
-const { Server } = require('..')
+const { Server } = require('../src/index.js')
 // const { HamtMap, MegaMap } = require('..')
 const { sleep } = require('../src/utils.js')
 const {
@@ -34,6 +36,9 @@ const sleepx = (clock) => (ms) => isRedis
   : Promise.resolve().then(clock.tick(ms))
 
 describe('Server', function () {
+  /**
+   * @type {Server}
+   */
   let server
 
   before(function () {

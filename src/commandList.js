@@ -1,3 +1,8 @@
+// @ts-check
+
+/**
+ * @type {{ [cmd: string]: [arity:number, flags:string[], first:number, last:number, step:number, refs: string[]] }}
+ */
 const commandList = {
   // acl: [-2, ['admin', 'noscript', 'loading', 'stale'], 0, 0, 0, ['@admin', '@slow', '@dangerous']],
   append: [3, ['write', 'denyoom', 'fast'], 1, 1, 1, ['@write', '@string', '@fast']],

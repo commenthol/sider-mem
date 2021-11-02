@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const assert = require('assert')
 const path = require('path')
 const fsp = require('fs/promises')
@@ -10,6 +12,9 @@ describe('Persistence', function () {
   describe('100k keys', function () {
     // this.timeout(15000)
 
+    /**
+     * @type {Cache}
+     */
     let cache
     const count = 1e5
     const filename = path.resolve(__dirname, 'fixtures/large.aof')
@@ -29,6 +34,7 @@ describe('Persistence', function () {
     })
 
     it('shall write keys', async function () {
+      // @ts-ignore
       const store = new Persistence({ filename })
       for (let i = 0; i <= count; i++) {
         const key = 'test:persist:' + i
@@ -51,6 +57,9 @@ describe('Persistence', function () {
   })
 
   describe('corrupt file', function () {
+    /**
+     * @type {Cache}
+     */
     let cache
     const filename = path.resolve(__dirname, 'fixtures/corrupt.aof')
 

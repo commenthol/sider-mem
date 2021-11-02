@@ -5,6 +5,16 @@ const { Commands } = require('./Commands.js')
 const { RequestParser, createArrayResp } = require('./Protocol.js')
 const { logger } = require('./log.js')
 
+/** @typedef {import('./Cache.js').Cache} Cache */
+
+/**
+ * @type {{
+ *   error: (...args: any[]) => void,
+ *   warn: (...args: any[]) => void,
+ *   info: (...args: any[]) => void,
+ *   debug: (...args: any[]) => void
+ * }}
+ */
 let log
 
 /**
@@ -19,6 +29,9 @@ class DrainNoop {
  * implements a append only filestore (AOF)
  */
 class Persistence {
+  /**
+   * @param {{ filename: string|undefined, cache: Cache }} param0
+   */
   constructor ({ filename, cache }) {
     log = logger('persistance')
     this._filename = filename
@@ -36,6 +49,7 @@ class Persistence {
     if (!filename) return
 
     const parser = new RequestParser()
+    // @ts-ignore
     const commands = new Commands({ drain: new DrainNoop(), cache: this._cache })
 
     parser.on('request', req => {
@@ -49,7 +63,7 @@ class Persistence {
       transform: (data, enc, done) => {
         try {
           parser.parse(data)
-        } catch (err) {
+        } catch (/** @type {any} */err) {
           log.error('ERRPARSE %s', err.message)
         }
         done()
@@ -69,8 +83,13 @@ class Persistence {
     log.info('finished loading file %s', filename)
   }
 
+  /**
+   * @param {string} cmd
+   * @param  {...any} args
+   */
   write (cmd, ...args) {
     const str = createArrayResp([cmd, ...args])
+    // @ts-ignore
     this._fsStream.write(str)
   }
 }

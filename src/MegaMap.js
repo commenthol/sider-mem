@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * ES6 Map compatible Wrapper for megahash
  */

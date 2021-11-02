@@ -1,5 +1,7 @@
+// @ts-nocheck
+
 const process = require('process')
-const assert = require('assert')
+const assert = require('assert/strict')
 const log = require('debug')('test')
 const { Server } = require('..')
 const { sleep } = require('../src/utils.js')

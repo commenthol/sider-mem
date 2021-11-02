@@ -1,4 +1,6 @@
-const assert = require('assert')
+// @ts-nocheck
+
+const assert = require('assert/strict')
 const sinon = require('sinon')
 const { Cache } = require('../src/Cache.js')
 const { TYPE_STRING, TYPE_HASH } = require('../src/constants.js')
@@ -6,6 +8,9 @@ const { sleep } = require('../src/utils.js')
 const { strictEqual, deepStrictEqual } = assert
 
 describe('Cache', function () {
+  /**
+   * @type {Cache}
+   */
   let cache
   before(function () {
     cache = new Cache({})

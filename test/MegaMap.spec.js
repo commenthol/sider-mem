@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const assert = require('assert')
 const { MegaMap } = require('../src/index.js')
 const { strictEqual, deepStrictEqual } = assert

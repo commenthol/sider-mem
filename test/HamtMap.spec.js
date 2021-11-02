@@ -1,8 +1,13 @@
-const assert = require('assert')
+// @ts-nocheck
+
+const assert = require('assert/strict')
 const { HamtMap } = require('../src/index.js')
 const { strictEqual, deepStrictEqual } = assert
 
 describe('HamtMap', function () {
+  /**
+   * @type {import("../src/HamtMap.js")}
+   */
   let hash
 
   it('set', function () {

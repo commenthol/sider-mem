@@ -1,4 +1,6 @@
-const assert = require('assert')
+// @ts-nocheck
+
+const assert = require('assert/strict')
 const {
   isMatch
 } = require('../src/utils.js')

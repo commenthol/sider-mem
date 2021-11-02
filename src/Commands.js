@@ -7,6 +7,8 @@
  * @see https://redis.io/commands
  */
 
+// @ts-check
+
 const os = require('os')
 const { commandList } = require('./commandList.js')
 const {
@@ -57,18 +59,40 @@ const {
 } = require('./constants.js')
 const { logger } = require('./log.js')
 
+/**
+ * @typedef {import('./Server.js').Server} Server
+ * @typedef {import('./Cache.js').Cache} Cache
+ * @typedef {import('./Client.js').Client} Client
+ * @typedef {import('./Persistence.js').Persistence} Persistence
+ * @typedef {import('./PubSub.js').PubSub} PubSub
+ */
+/**
+ * @type {{
+ *   error: (...args: any[]) => void,
+ *   warn: (...args: any[]) => void,
+ *   info: (...args: any[]) => void,
+ *   debug: (...args: any[]) => void
+ * }}
+ */
 let log
 
 const PEXPIREAT = 'pexpireat'
 const SET = 'set'
 
+/**
+ * @param {any} value
+ */
 const assertInteger = (value) => {
-  if (!isInteger(toNumber(value))) {
+  if (!isInteger(Number(value))) {
     throw new Error(ERR_NOT_INTEGER)
   }
 }
 
-const parseScanArgs = args => {
+/**
+ * @param {string[]} args
+ * @returns {{matcher: function, count: number, type: string|undefined}}
+ */
+const parseScanArgs = (args) => {
   let matcher = () => true
   let count = 10
   let type
@@ -78,6 +102,7 @@ const parseScanArgs = args => {
     const val = args[i + 1]
     switch (cmd) {
       case 'match':
+        // @ts-ignore
         matcher = isMatch(val)
         break
       case 'count': {
@@ -99,11 +124,21 @@ const parseScanArgs = args => {
 }
 
 class Commands {
+  /**
+   * @param {{
+   *  server: Server;
+   *  cache?: Cache;
+   *  client: Client;
+   *  pubsub?: PubSub;
+   *  drain: Persistence;
+   * }} options
+   */
   constructor (options) {
     const {
       server,
       cache,
       client,
+      pubsub,
       drain
     } = options
 
@@ -112,42 +147,61 @@ class Commands {
     this._server = server
     this._client = client
     this._cache = cache || server._cache
+    this._pubsub = pubsub || server?._pubsub
     this._drain = drain
   }
 
+  /**
+   * @param {string} cmd
+   * @param {any[]} args
+   */
   unknownCommand (cmd, args) {
-    return new Error(`ERR unknown command \`${cmd}\`, with args beginning with: ${args.map(a => `\`${a}\``).join(', ')}`)
+    return new Error(`ERR unknown command \`${cmd}\`, with args beginning with: ${args.map((/** @type {any} */ a) => `\`${a}\``).join(', ')}`)
   }
 
+  /**
+   * @param {string} cmd
+   * @param {string} subcmd
+   */
   unknownSubCommand (cmd, subcmd) {
     return new Error(`ERR Unknown subcommand or wrong number of arguments for '${subcmd}'. Try ${cmd.toUpperCase()} HELP.`)
   }
 
+  /**
+   * @param {string} cmd
+   * @param {any[]} args
+   */
   assertCommand (cmd, args) {
+    /** @type {[arity:number, flags:string[], first:number, last:number, step:number, refs: string[]]} */
     const fields = commandList[cmd]
     if (!fields) {
       throw this.unknownCommand(cmd, args)
     }
     let fails = false
     const len = args.length
-    // eslint-disable-next-line no-unused-vars
-    const [arity, flags, first, last, step] = fields
+    const [arity, , , , step] = fields
     if (arity > 0) { // fixed length
       fails = len !== arity - 1
     } else if (arity === -1) {
       // noop
     } else {
       const _arity = -arity - 1
-      fails = len < _arity || (step && len % step !== 0)
+      fails = len < _arity || (step ? (len % step) !== 0 : false)
     }
     if (fails) {
       throw new Error(`ERR wrong number of arguments for '${cmd}' command`)
     }
   }
 
+  /**
+   * @param {string} cmd
+   * @param {any} args
+   */
   async handleCommand (cmd, args) {
+    // @ts-ignore
     if (isFunction(this[cmd])) {
       this.assertCommand(cmd, args)
+      // @ts-ignore
       const data = await this[cmd](...args)
       // log.debug(cmd, data)
       return data
@@ -158,6 +212,9 @@ class Commands {
 
   // ---- server related
 
+  /**
+   * @param {any[]} section
+   */
   info (...section) {
     const { version, mode, role } = this._server._config
     const { port } = this._server._opts
@@ -322,11 +379,15 @@ class Commands {
       }
     }
 
+    /**
+     * @type {string[]}
+     */
     const arr = []
 
     const sections = section.length ? section : Object.keys(vals)
 
     sections.forEach(section => {
+      // @ts-ignore
       const o = vals[section]
       if (o) {
         arr.push(`# ${capitalize(section, true)}`)
@@ -353,7 +414,18 @@ class Commands {
     }
   }
 
+  /**
+   * @param {string} subcmd
+   * @param {any[]} args
+   * @return {string[]}
+   */
   command (subcmd, ...args) {
+    /**
+     * @private
+     * @param {any[]} a
+     * @param {any[]} currentValue
+     * @returns {(any|null)[]}
+     */
     const reducer = (a, [cmd, fields]) => {
       if (!fields) {
         a.push(null)
@@ -377,6 +449,9 @@ class Commands {
     return Object.entries(commandList).reduce(reducer, [])
   }
 
+  /**
+   * @return {string[]}
+   */
   time () {
     const now = Date.now()
     const secs = msToSecs(now)
@@ -392,6 +467,10 @@ class Commands {
 
   // ---- client
 
+  /**
+   * @param {any[]} args
+   * @returns {string|Error}
+   */
   auth (...args) {
     const [username, password] = args.length === 1 ? [USERNAME_DEFAULT, args[0]] : args
     const isAuth = this._server._verifyAuth({ username, password })
@@ -403,6 +482,10 @@ class Commands {
     return new Error(ERR_WRONGPASS)
   }
 
+  /**
+   * @param {number} db
+   * @returns {string}
+   */
   select (db) {
     assertInteger(db)
     if (db > 0) {
@@ -412,6 +495,11 @@ class Commands {
     return OK
   }
 
+  /**
+   * @param {any} subcmd
+   * @param {any[]} args
+   * @returns {string|string[]|null}
+   */
   client (subcmd, ...args) {
     switch (subcmd) {
       case 'setname': {
@@ -434,6 +522,9 @@ class Commands {
     }
   }
 
+  /**
+   * @returns {string}
+   */
   quit () {
     this._client.end()
     return OK
@@ -441,14 +532,25 @@ class Commands {
 
   // ---- general
 
+  /**
+   * @param {any} message
+   * @returns {string}
+   */
   ping (message) {
     return message || 'PONG'
   }
 
+  /**
+   * @param {any} message
+   * @returns {string}
+   */
   echo (message) {
     return message
   }
 
+  /**
+   * @param {any[]} keys
+   */
   exists (...keys) {
     for (const key of keys) {
       if (this.pttl(key) > KEY_NOT_EXISTS) {
@@ -458,6 +560,9 @@ class Commands {
     return FALSE
   }
 
+  /**
+   * @param {any[]} keys
+   */
   del (...keys) {
     let count = 0
     const deletedKeys = []
@@ -473,6 +578,9 @@ class Commands {
     return count
   }
 
+  /**
+   * @param {any} key
+   */
   type (key) {
     return this._cache.getType(key) || TYPE_NONE
   }
@@ -487,6 +595,10 @@ class Commands {
     return OK
   }
 
+  /**
+   * @param {number} cursor
+   * @param {any[]} args
+   */
   async scan (cursor, ...args) {
     cursor = Number(cursor)
 
@@ -531,6 +643,10 @@ class Commands {
     return this._client.hasTransaction
   }
 
+  /**
+   * @param {string} cmd
+   * @param {any} args
+   */
   handleTransaction (cmd, args) {
     if (cmd === 'exec') {
       return this.exec()
@@ -553,7 +669,7 @@ class Commands {
         arr.push(writeResponse(result))
       }
       return new ResponseData(arr, createSimpleArrayResp)
-    } catch (err) {
+    } catch (/** @type {any} */ err) {
       log.warn('EXECABORT %s', err.message)
       return new Error(ERR_EXECABORT)
     }
@@ -561,28 +677,54 @@ class Commands {
 
   // --- ttl
 
+  /**
+   * @param {any} key
+   * @param {string|number} seconds
+   * @param {string} type
+   */
   expire (key, seconds, type) {
     return this.pexpire(key, toNumber(seconds) * 1000, type)
   }
 
+  /**
+   * @param {any} key
+   * @param {any} timestamp
+   * @param {any} type
+   */
   expireat (key, timestamp, type) {
     return this.pexpireat(key, toNumber(timestamp) * 1000, type)
   }
 
+  /**
+   * @param {any} key
+   */
   expiretime (key) {
     return msToSecs(this.pexpiretime(key))
   }
 
+  /**
+   * @param {any} key
+   */
   ttl (key) {
     return msToSecs(this.pttl(key))
   }
 
+  /**
+   * @param {any} key
+   * @param {number} ms
+   * @param {any} type
+   */
   pexpire (key, ms, type) {
     return this.pexpireat(key, Date.now() + toNumber(ms), type)
   }
 
+  /**
+   * @param {any} key
+   * @param {number | undefined} timestampMs
+   * @param {any} type
+   */
   pexpireat (key, timestampMs, type) {
-    timestampMs = toNumber(timestampMs)
+    timestampMs = Number(timestampMs)
     assertInteger(timestampMs)
 
     const ttl = this.pttl(key)
@@ -636,6 +778,9 @@ class Commands {
     return FALSE
   }
 
+  /**
+   * @param {any} key
+   */
   pexpiretime (key) {
     if (!this._cache.hasExpiry(key)) {
       return this._cache.has(key) ? KEY_NO_EXPIRY : KEY_NOT_EXISTS
@@ -648,6 +793,9 @@ class Commands {
     return KEY_NOT_EXISTS
   }
 
+  /**
+   * @param {any} key
+   */
   pttl (key) {
     const timestamp = this.pexpiretime(key)
     if (timestamp === KEY_NO_EXPIRY || timestamp === KEY_NOT_EXISTS) {
@@ -656,6 +804,9 @@ class Commands {
     return timestamp - Date.now()
   }
 
+  /**
+   * @param {any} key
+   */
   persist (key) {
     if (this.pttl(key) <= 0) {
       return FALSE
@@ -667,6 +818,12 @@ class Commands {
 
   // ---- strings
 
+  /**
+   * @param {any} key
+   * @param {string} value
+   * @param {string | undefined} [type]
+   * @param {undefined} [amount]
+   */
   set (key, value, type, amount) {
     let timestampMs
     const _type = type && String(type).toUpperCase()
@@ -703,20 +860,35 @@ class Commands {
     this._cache.set(key, value, TYPE_STRING)
     this._drain.write(SET, key, value)
     if (!isNil(timestampMs)) {
+      // @ts-ignore
       this._cache.setExpiry(key, timestampMs)
       this._drain.write(PEXPIREAT, key, timestampMs)
     }
     return OK
   }
 
+  /**
+   * @param {any} key
+   * @param {any} seconds
+   * @param {any} value
+   */
   setex (key, seconds, value) {
     return this.set(key, value, 'EX', seconds)
   }
 
+  /**
+   * @param {any} key
+   * @param {any} ms
+   * @param {any} value
+   */
   psetex (key, ms, value) {
     return this.set(key, value, 'PX', ms)
   }
 
+  /**
+   * @param {any} key
+   * @param {string} value
+   */
   append (key, value) {
     const current = this.get(key)
     const str = '' + (current === null ? '' : current) + value
@@ -724,6 +896,11 @@ class Commands {
     return str.length
   }
 
+  /**
+   * @param {any} key
+   * @param {number} offset
+   * @param {string} value
+   */
   setrange (key, offset, value) {
     const current = this.get(key)
     const str = ('' + (current === null ? '' : current)).padEnd(offset, '\u0000') + value
@@ -731,6 +908,9 @@ class Commands {
     return str.length
   }
 
+  /**
+   * @param {any[]} keyValues
+   */
   mset (...keyValues) {
     for (let i = 0; i < keyValues.length; i += 2) {
       const key = keyValues[i]
@@ -741,6 +921,9 @@ class Commands {
     return OK
   }
 
+  /**
+   * @param {any[]} keyValues
+   */
   msetnx (...keyValues) {
     for (let i = 0; i < keyValues.length; i += 2) {
       const key = keyValues[i]
@@ -752,12 +935,18 @@ class Commands {
     return TRUE
   }
 
+  /**
+   * @param {any} key
+   */
   get (key) {
     return (this.exists(key))
       ? this._cache.get(key, TYPE_STRING)
       : null
   }
 
+  /**
+   * @param {any} key
+   */
   getdel (key) {
     const value = this.get(key)
     if (value !== null) {
@@ -766,6 +955,11 @@ class Commands {
     return value
   }
 
+  /**
+   * @param {any} key
+   * @param {any} start
+   * @param {any} end
+   */
   getrange (key, start, end) {
     assertInteger(start)
     assertInteger(end)
@@ -775,7 +969,7 @@ class Commands {
       return ''
     }
 
-    const fixLen = (n, corr = 0) => (n >= 0 ? n : n + value.length) + corr
+    const fixLen = (/** @type {number} */ n, corr = 0) => (n >= 0 ? n : n + value.length) + corr
 
     const _end = fixLen(toNumber(end), 1)
     const _start = fixLen(toNumber(start))
@@ -784,16 +978,26 @@ class Commands {
     return str
   }
 
+  /**
+   * @param {any} key
+   * @param {any} value
+   */
   getset (key, value) {
     const oldValue = this.get(key)
     this.set(key, value)
     return oldValue
   }
 
+  /**
+   * @param {any[]} keys
+   */
   mget (...keys) {
     return keys.map(key => this.get(key))
   }
 
+  /**
+   * @param {any} key
+   */
   strlen (key) {
     const value = this.get(key)
     return isNil(value)
@@ -801,24 +1005,42 @@ class Commands {
       : String(value).length
   }
 
+  /**
+   * @param {any} key
+   */
   decr (key) {
     return this.incrbyfloat(key, -1)
   }
 
+  /**
+   * @param {any} key
+   * @param {number} decrement
+   */
   decrby (key, decrement) {
     assertInteger(decrement)
     return this.incrbyfloat(key, -decrement)
   }
 
+  /**
+   * @param {any} key
+   */
   incr (key) {
     return this.incrbyfloat(key, 1)
   }
 
+  /**
+   * @param {any} key
+   * @param {any} increment
+   */
   incrby (key, increment) {
     assertInteger(increment)
     return this.incrbyfloat(key, increment)
   }
 
+  /**
+   * @param {any} key
+   * @param {number} increment
+   */
   incrbyfloat (key, increment) {
     let value = Number(this.get(key))
     const inc = Number(increment)
@@ -833,6 +1055,10 @@ class Commands {
 
   // --- hashes
 
+  /**
+   * @param {any} key
+   * @param {number[]} fieldVals
+   */
   hset (key, ...fieldVals) {
     const obj = this.hgetall(key)
     let cnt = 0
@@ -847,6 +1073,11 @@ class Commands {
     return cnt
   }
 
+  /**
+   * @param {any} key
+   * @param {any} field
+   * @param {any} value
+   */
   hsetnx (key, field, value) {
     const exists = this.hexists(key, field)
     if (exists) {
@@ -855,12 +1086,20 @@ class Commands {
     return this.hset(key, field, value)
   }
 
+  /**
+   * @param {any} key
+   * @param {string | number} field
+   */
   hget (key, field) {
     const obj = this.hgetall(key)
     const value = obj[field]
     return isNil(value) ? null : value
   }
 
+  /**
+   * @param {any} key
+   * @param {any[]} fields
+   */
   hmget (key, ...fields) {
     const obj = this.hgetall(key)
     return fields.reduce((a, field) => {
@@ -870,29 +1109,45 @@ class Commands {
   }
 
   /**
-   * @deprecated
+   *
+   * @param {any} key
+   * @param {any[]} fieldVals
    */
   hmset (key, ...fieldVals) {
     this.hset(key, ...fieldVals)
     return OK
   }
 
+  /**
+   * @param {any} key
+   */
   hgetall (key) {
     return (this.exists(key))
       ? this._cache.get(key, TYPE_HASH)
       : {}
   }
 
+  /**
+   * @param {any} key
+   */
   hkeys (key) {
     const obj = this.hgetall(key)
     return Object.keys(obj)
   }
 
+  /**
+   * @param {any} key
+   */
   hvals (key) {
     const obj = this.hgetall(key)
     return Object.values(obj)
   }
 
+  /**
+   * @param {any} key
+   * @param {number} cursor
+   * @param {any[]} args
+   */
   hscan (key, cursor, ...args) {
     cursor = Number(cursor)
     assertInteger(cursor)
@@ -910,11 +1165,18 @@ class Commands {
     return ['0', results]
   }
 
+  /**
+   * @param {any} key
+   */
   hlen (key) {
     const obj = this.hgetall(key)
     return Object.keys(obj).length
   }
 
+  /**
+   * @param {any} key
+   * @param {any[]} fields
+   */
   hdel (key, ...fields) {
     const obj = this.hgetall(key)
     let cnt = 0
@@ -929,6 +1191,10 @@ class Commands {
     return cnt
   }
 
+  /**
+   * @param {any} key
+   * @param {string} field
+   */
   hexists (key, field) {
     const obj = this.hgetall(key)
     return (field in obj)
@@ -936,6 +1202,11 @@ class Commands {
       : FALSE
   }
 
+  /**
+   * @param {any} key
+   * @param {any} field
+   * @param {number} increment
+   */
   hincrby (key, field, increment) {
     let value = this.hexists(key, field)
       ? Number(this.hget(key, field))
@@ -951,6 +1222,11 @@ class Commands {
     return value
   }
 
+  /**
+   * @param {any} key
+   * @param {any} field
+   * @param {number} increment
+   */
   hincrbyfloat (key, field, increment) {
     let value = this.hexists(key, field)
       ? Number(this.hget(key, field))
@@ -966,11 +1242,61 @@ class Commands {
     return value
   }
 
+  /**
+   * @param {any} key
+   * @param {any} field
+   */
   hstrlen (key, field) {
     const value = this.hget(key, field)
     return (isNil(value))
       ? 0
       : String(value).length
+  }
+
+  // --- pubsub
+
+  /**
+   * @param  {...string} patterns
+   * @returns {number}
+   */
+  psubscribe (...patterns) {
+    return this._pubsub.pSubscribe(this._client, patterns)
+  }
+
+  /**
+   * @param {string} channel
+   * @param {string} message
+   * @returns {number}
+   */
+  publish (channel, message) {
+    return this._pubsub.publish(channel, message)
+  }
+
+  pubsub () {
+  }
+
+  /**
+   * @param  {...string} patterns
+   * @returns {number}
+   */
+  punsubscribe (...patterns) {
+    return this._pubsub.pUnsubscribe(this._client, patterns)
+  }
+
+  /**
+   * @param  {...string} channels
+   * @returns {number}
+   */
+  subscribe (...channels) {
+    return this._pubsub.subscribe(this._client, channels)
+  }
+
+  /**
+   * @param  {...string} channels
+   * @returns {number}
+   */
+  unsubscribe (...channels) {
+    return this._pubsub.unsubscribe(this._client, channels)
   }
 }
 

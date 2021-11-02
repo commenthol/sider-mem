@@ -8,6 +8,12 @@ const {
 } = require('./constants.js')
 
 class Cache {
+  /**
+   * @param {{
+   *  HashMap?: MapConstructor | undefined;
+   *  nextHouseKeepingSec?: number | undefined;
+   * }} options
+   */
   constructor (options) {
     const {
       HashMap = Map,
@@ -29,6 +35,7 @@ class Cache {
   }
 
   _loopExpired () {
+    // @ts-ignore
     const { value, done } = this._expiresIterator.next()
     if (done) {
       setTimeout(() => this._houseKeeping(), this._nextHouseKeepingMs)
@@ -42,10 +49,19 @@ class Cache {
     process.nextTick(() => this._loopExpired())
   }
 
+  /**
+   * @param {string} key
+   * @param {any} value
+   * @param {string} type
+   */
   set (key, value, type) {
     this.map.set(key, [value, type])
   }
 
+  /**
+   * @param {string} key
+   * @returns {boolean}
+   */
   has (key) {
     if (this.expires.has(key) && this.expires.get(key) <= Date.now()) {
       this.map.delete(key)
@@ -55,6 +71,11 @@ class Cache {
     return this.map.has(key)
   }
 
+  /**
+   * @param {string} key
+   * @param {string} expectedType
+   * @returns {any}
+   */
   get (key, expectedType) {
     if (!this.map.has(key)) {
       return null
@@ -66,6 +87,10 @@ class Cache {
     return value
   }
 
+  /**
+   * @param {string} key
+   * @returns {string|null}
+   */
   getType (key) {
     if (!this.map.has(key)) {
       return null
@@ -74,14 +99,22 @@ class Cache {
     return type
   }
 
+  /**
+   * @param {string} key
+   * @returns {boolean}
+   */
   delete (key) {
     this.expires.delete(key)
     if (this.map.has(key)) {
       this.map.delete(key)
       return true
     }
+    return false
   }
 
+  /**
+   * @returns {number}
+   */
   size () {
     return this.map.size
   }
@@ -91,24 +124,43 @@ class Cache {
     this.map.clear()
   }
 
+  /**
+   * @returns {Iterator<any,any>}
+   */
   iterator () {
     return this.map[Symbol.iterator]()
   }
 
+  /**
+   * @param {string} key
+   * @returns {boolean}
+   */
   hasExpiry (key) {
     return this.expires.has(key)
   }
 
+  /**
+   * @param {string} key
+   * @returns {number}
+   */
   getExpiry (key) {
     return this.expires.get(key)
   }
 
+  /**
+   * @param {string} key
+   * @param {number} expiry
+   */
   setExpiry (key, expiry) {
     if (this.map.has(key)) {
       this.expires.set(key, expiry)
     }
   }
 
+  /**
+   * @param {string} key
+   * @returns {boolean}
+   */
   deleteExpiry (key) {
     return this.expires.delete(key)
   }

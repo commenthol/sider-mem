@@ -18,17 +18,20 @@
   "license": "MIT",
   "author": "commenthol <commenthol@gmail.com>",
   "main": "src/index.js",
+  "types": "types/index.d.ts",
   "bin": {
     "sider-mem": "bin/sider-mem.js"
   },
   "scripts": {
-    "all": "npm run lint && npm t",
+    "all": "npm run lint && npm t && npm run check && npm run types",
+    "check": "tsc --noEmit true",
     "coverage": "c8 -r html -r text mocha",
     "dev": "DEBUG_LEVEL=debug nodemon bin/sider-mem.js --host 0.0.0.0 --port 6378",
-    "example": "DEBUG_LEVEL=debug node examples/cluster.js",
+    "example": "DEBUG_JSON=1 DEBUG_LEVEL=debug node examples/cluster.js",
     "lint": "eslint --fix \"**/*.js\"",
     "start": "DEBUG_LEVEL=debug ./bin/sider-mem.js",
-    "test": "c8 mocha"
+    "test": "c8 mocha",
+    "types": "rm -r types; tsc --emitDeclarationOnly true --noEmitOnError"
   },
   "mocha": {
     "exit": true
@@ -38,6 +41,9 @@
     "picomatch": "^2.3.0"
   },
   "devDependencies": {
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^16.11.6",
+    "@types/picomatch": "^2.3.0",
     "c8": "^7.10.0",
     "connect-redis": "^6.0.0",
     "debug": "^4.3.2",
@@ -49,10 +55,12 @@
     "express": "^4.17.1",
     "express-session": "^1.17.2",
     "hamt": "^2.2.2",
+    "jsdoc": "^3.6.7",
     "megahash": "^1.0.5",
     "mocha": "^9.1.3",
     "redis": "^3.1.2",
-    "sinon": "^11.1.2"
+    "sinon": "^11.1.2",
+    "typescript": "^4.4.4"
   },
   "engine": {
     "node": ">=14.0.0"

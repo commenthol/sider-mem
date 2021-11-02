@@ -5,6 +5,7 @@ const { Cache } = require('./Cache.js')
 const { Client } = require('./Client.js')
 const { Commands } = require('./Commands.js')
 const { Persistence } = require('./Persistence.js')
+const { PubSub } = require('./PubSub.js')
 const {
   OK,
   USERNAME_DEFAULT,
@@ -32,9 +33,32 @@ const EXIT_SIGNALS = [
   'SIGBREAK'
 ]
 
+/**
+ * @typedef {import('node:net').Socket} Socket
+ */
+/**
+ * @type {{
+ *   error: (...args: any[]) => void,
+ *   warn: (...args: any[]) => void,
+ *   info: (...args: any[]) => void,
+ *   debug: (...args: any[]) => void
+ * }}
+ */
 let log
 
 class Server {
+  /**
+   * @param {{
+   *  username?: string,
+   *  password?: string,
+   *  log?: function,
+   *  gracefulTimeout?: number,
+   *  maxBufferLength?: number,
+   *  HashMap?: MapConstructor,
+   *  nextHouseKeepingSec?: number,
+   *  dbDir?: string
+   * }} options
+   */
   constructor (options) {
     const {
       username = USERNAME_DEFAULT,
@@ -63,14 +87,20 @@ class Server {
       role: 'master'
     }
 
-    this._opts = { maxBufferLength, gracefulTimeout }
-    this._cache = new Cache({ HashMap, nextHouseKeepingSec, server: this })
+    this._opts = { maxBufferLength, gracefulTimeout, port: undefined }
+    this._cache = new Cache({ HashMap, nextHouseKeepingSec })
+    this._pubsub = new PubSub()
     this._store = new Persistence({ filename, cache: this._cache })
 
     this._sockets = new Set()
     this._isShutdown = false
 
     this._needsAuth = password !== undefined
+    /**
+     *
+     * @param {{ username?: string, password?: string }} auth
+     * @returns
+     */
     this._verifyAuth = (auth) => {
       const u = timingSafeEqual(auth.username, username)
       const p = timingSafeEqual(auth.password, password)
@@ -78,6 +108,13 @@ class Server {
     }
   }
 
+  /**
+   * @private
+   * @param {any[]} req
+   * @param {Commands} commands
+   * @param {Client} client
+   * @returns {Promise<string>}
+   */
   async _handleRequest (req, commands, client) {
     log.debug('%j', req)
     const [cmd, ...args] = req
@@ -104,6 +141,11 @@ class Server {
     return writeResponse(data)
   }
 
+  /**
+   * @private
+   * @param {Socket} socket
+   * @returns
+   */
   _connect (socket) {
     if (this._isShutdown) {
       socket.destroy()
@@ -155,6 +197,13 @@ class Server {
     })
   }
 
+  /**
+   * @param {{
+   *  socket?: Socket,
+   *  host?: string | undefined;
+   *  port?: string;
+   * }} options
+   */
   async listen (options) {
     const {
       socket,
@@ -173,18 +222,19 @@ class Server {
 
     const { promise, reject, resolve } = createPromise()
 
-    const cb = (err) => {
+    const cb = (/** @type {Error} */ err) => {
       if (err) {
         log.error(err)
         reject(err)
       }
-      log.info('server online %j', this._server.address())
+      log.info('server online %j', this._server?.address())
       resolve()
     }
 
     if (socket) {
       this._server.listen(socket, cb)
     } else {
+      // @ts-ignore
       this._server.listen(port, host, cb)
     }
 
@@ -204,7 +254,7 @@ class Server {
       }
     }
 
-    this._server.close((err) => err ? reject(err) : resolve(OK))
+    this._server?.close((err) => err ? reject(err) : resolve(OK))
     log.info('server closed')
 
     return promise
