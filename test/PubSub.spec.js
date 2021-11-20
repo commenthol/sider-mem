@@ -1,4 +1,4 @@
-const assert = require('assert/strict')
+const assert = require('assert')
 const { Server } = require('../src/index.js')
 const { createPromise, sleep } = require('../src/utils.js')
 const {

@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-const assert = require('assert/strict')
+const assert = require('assert')
 const log = require('debug')('test:server')
 const fsp = require('fs/promises')
 const path = require('path')

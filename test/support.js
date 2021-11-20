@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-const assert = require('assert/strict')
+const assert = require('assert')
 const { promisify } = require('util')
 const redis = require('redis')
 

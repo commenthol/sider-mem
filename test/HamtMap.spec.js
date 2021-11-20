@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-const assert = require('assert/strict')
+const assert = require('assert')
 const HamtMap = require('../src/HamtMap.js')
 const { strictEqual, deepStrictEqual } = assert
 

@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-const assert = require('assert/strict')
+const assert = require('assert')
 const log = require('debug')('test')
 const { Server } = require('..')
 const { sleep } = require('../src/utils.js')

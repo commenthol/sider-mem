@@ -5,7 +5,7 @@
 
 // @ts-nocheck
 
-const assert = require('assert/strict')
+const assert = require('assert')
 const {
   NIL,
   RequestParser,
