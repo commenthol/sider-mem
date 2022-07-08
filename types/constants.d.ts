@@ -14,6 +14,7 @@ export const ERR_TYPE: "WRONGTYPE Operation against a key holding the wrong kind
 export const ERR_VALUE_FLOAT: "ERR value is not a valid float";
 export const ERR_WRONGPASS: "WRONGPASS invalid username-password pair or user is disabled.";
 export const ERR_NO_SUCH_KEY: "ERR no such key";
+export const ERR_RANGE: "ERR index out of range";
 export const NX: "NX";
 export const XX: "XX";
 export const GT: "GT";
@@ -25,3 +26,4 @@ export const FALSE: 0;
 export const TYPE_NONE: "none";
 export const TYPE_STRING: "string";
 export const TYPE_HASH: "hash";
+export const TYPE_LIST: "list";

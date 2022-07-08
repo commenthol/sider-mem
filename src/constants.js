@@ -17,6 +17,7 @@ const ERR_CLIENT_NAMES = 'ERR Client names cannot contain spaces, newlines or sp
 const ERR_CURSOR = 'ERR invalid cursor'
 const ERR_DB_INDEX = 'ERR DB index is out of range'
 const ERR_NO_SUCH_KEY = 'ERR no such key'
+const ERR_RANGE = 'ERR index out of range'
 
 const NX = 'NX'
 const XX = 'XX'
@@ -32,7 +33,7 @@ const FALSE = 0
 const TYPE_NONE = 'none'
 const TYPE_STRING = 'string'
 const TYPE_HASH = 'hash'
-// const TYPE_LIST = 'list'
+const TYPE_LIST = 'list'
 // const TYPE_SET = 'set'
 // const TYPE_ZSET = 'zset'
 // const TYPE_STREAM = 'stream'
@@ -54,6 +55,7 @@ module.exports = {
   ERR_VALUE_FLOAT,
   ERR_WRONGPASS,
   ERR_NO_SUCH_KEY,
+  ERR_RANGE,
   NX,
   XX,
   GT,
@@ -64,5 +66,6 @@ module.exports = {
   FALSE,
   TYPE_NONE,
   TYPE_STRING,
-  TYPE_HASH
+  TYPE_HASH,
+  TYPE_LIST
 }

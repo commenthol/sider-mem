@@ -1563,6 +1563,376 @@ describe('Server', function () {
       )
     })
   })
+
+  describe('list', function () {
+    const key = 'test:list'
+
+    before(async function () {
+      await client.del(key)
+    })
+
+    it('rpop on empty list', async function () {
+      assert.strictEqual(
+        await client.rpop(key),
+        null
+      )
+    })
+
+    it('rpush', async function () {
+      assert.strictEqual(
+        await client.rpush(key, 'one', 'two', 'three'),
+        3
+      )
+    })
+
+    it('rpop', async function () {
+      assert.strictEqual(
+        await client.rpop(key),
+        'three'
+      )
+    })
+
+    it('rpop count 4', async function () {
+      assert.deepStrictEqual(
+        await client.rpop(key, 4),
+        ['two', 'one']
+      )
+    })
+
+    it('llen on unknown key', async function () {
+      assert.strictEqual(
+        await client.llen(key + ':unknown'),
+        0
+      )
+    })
+
+    it('lpush', async function () {
+      assert.strictEqual(
+        await client.lpush(key, '1', '2', '3'),
+        3
+      )
+    })
+
+    it('lpop', async function () {
+      assert.strictEqual(
+        await client.lpop(key),
+        '3'
+      )
+    })
+
+    it('rpop', async function () {
+      assert.strictEqual(
+        await client.rpop(key),
+        '1'
+      )
+    })
+
+    it('lpop count 4', async function () {
+      assert.deepStrictEqual(
+        await client.lpop(key, 4),
+        ['2']
+      )
+    })
+
+    it('lpushx on not existing key', async function () {
+      assert.deepStrictEqual(
+        await client.lpushx(key + ':unknown', 'aa', 'bb', 'cc'),
+        0
+      )
+    })
+
+    it('lpushx', async function () {
+      const _key = key + ':lpushx'
+      await client.del(_key)
+      await client.rpush(_key, 'zz')
+      assert.deepStrictEqual(
+        await client.lpushx(_key, 'aa', 'bb', 'cc'),
+        4
+      )
+    })
+
+    it('rpushx on not existing key', async function () {
+      assert.deepStrictEqual(
+        await client.rpushx(key + ':unknown', 'aa', 'bb', 'cc'),
+        0
+      )
+    })
+
+    it('rpushx', async function () {
+      const _key = key + ':rpushx'
+      await client.del(_key)
+      await client.lpush(_key, 'zz')
+      assert.deepStrictEqual(
+        await client.rpushx(_key, 'aa', 'bb', 'cc'),
+        4
+      )
+    })
+
+    it('lindex on not existing key', async function () {
+      const _key = key + ':unknown'
+      assert.deepStrictEqual(
+        await client.lindex(_key, 0),
+        null
+      )
+    })
+
+    it('lindex', async function () {
+      const _key = key + ':lindex'
+      await client.del(_key)
+      await client.rpush(_key, 'aa', 'bb', 'cc')
+      assert.deepStrictEqual(
+        await client.lindex(_key, 2),
+        'cc'
+      )
+      assert.deepStrictEqual(
+        await client.lindex(_key, -2),
+        'bb'
+      )
+    })
+
+    it('llen', async function () {
+      const _key = key + ':llen'
+      await client.del(_key)
+      await client.rpush(_key, ['0', '1', '2', '3', '4', '5', '6'])
+      assert.strictEqual(
+        await client.llen(_key),
+        7
+      )
+    })
+
+    it('lrange on non existing key', async function () {
+      const _key = key + ':unknown'
+      assert.deepStrictEqual(
+        await client.lrange(_key, 1, 3),
+        []
+      )
+    })
+
+    it('lrange', async function () {
+      const _key = key + ':lrange'
+      const elements = 'abcdefghijklmnopq'.split('')
+      await client.del(_key)
+      await client.rpush(_key, ...elements)
+      assert.deepStrictEqual(
+        await client.lrange(_key, 4, 10),
+        ['e', 'f', 'g', 'h', 'i', 'j', 'k']
+      )
+    })
+
+    it('lrange negative start', async function () {
+      const _key = key + ':lrange'
+      const elements = 'abcdefghijklmnopq'.split('')
+      await client.del(_key)
+      await client.rpush(_key, ...elements)
+      assert.deepStrictEqual(
+        await client.lrange(_key, -4, 10),
+        []
+      )
+    })
+
+    it('lrange out of bounds', async function () {
+      const _key = key + ':lrange'
+      const elements = 'abcd'.split('')
+      await client.del(_key)
+      await client.rpush(_key, ...elements)
+      assert.deepStrictEqual(
+        await client.lrange(_key, 5, 10),
+        []
+      )
+    })
+
+    it('ltrim', async function () {
+      const _key = key + ':ltrim'
+      await client.del(_key)
+      await client.rpush(_key, ['one', 'two', 'three', 'four'])
+      assert.strictEqual(
+        await client.ltrim(_key, 1, -2),
+        'OK'
+      )
+      assert.deepStrictEqual(
+        await client.lrange(_key, 0, -1),
+        ['two', 'three']
+      )
+    })
+
+    it('lrem', async function () {
+      const _key = key + ':lrem'
+      await client.del(_key)
+      await client.rpush(_key, ['1', '0', '2', '3', '0', '0', '4', '5', '0', '6'])
+      assert.strictEqual(
+        await client.lrem(_key, 0, '0'),
+        4
+      )
+      assert.deepStrictEqual(
+        await client.lrange(_key, 0, -1),
+        ['1', '2', '3', '4', '5', '6']
+      )
+    })
+
+    it('lrem head 2', async function () {
+      const _key = key + ':lrem'
+      await client.del(_key)
+      await client.rpush(_key, ['1', '0', '2', '3', '0', '0', '4', '5', '0', '6'])
+      assert.strictEqual(
+        await client.lrem(_key, 2, '0'),
+        2
+      )
+      assert.deepStrictEqual(
+        await client.lrange(_key, 0, -1),
+        ['1', '2', '3', '0', '4', '5', '0', '6']
+      )
+    })
+
+    it('lrem tail -3', async function () {
+      const _key = key + ':lrem'
+      await client.del(_key)
+      await client.rpush(_key, ['1', '0', '2', '3', '0', '0', '4', '5', '0', '6'])
+      assert.strictEqual(
+        await client.lrem(_key, -3, '0'),
+        3
+      )
+      assert.deepStrictEqual(
+        await client.lrange(_key, 0, -1),
+        ['1', '0', '2', '3', '4', '5', '6']
+      )
+    })
+
+    it('lset', async function () {
+      const _key = key + ':lset'
+      await client.del(_key)
+      await client.rpush(_key, ['one', 'two', 'three'])
+      assert.strictEqual(
+        await client.lset(_key, 0, 'four'),
+        'OK'
+      )
+      assert.strictEqual(
+        await client.lset(_key, -2, 'five'),
+        'OK'
+      )
+      assert.deepStrictEqual(
+        await client.lrange(_key, 0, -1),
+        ['four', 'five', 'three']
+      )
+    })
+
+    it('lset out of bounds', async function () {
+      const _key = key + ':lset'
+      await client.del(_key)
+      await client.rpush(_key, ['one', 'two', 'three'])
+      await assertError(async () => {
+        await client.lset(_key, 4, 'four')
+      }, 'ERR index out of range')
+    })
+
+    it('lpos', async function () {
+      const _key = key + ':lpos'
+      await client.del(_key)
+      await client.rpush(_key, ['a', 'b', 'c', 'd', '1', '2', '3', '4', '3', '3', '3'])
+      assert.strictEqual(
+        await client.lpos(_key, '3'),
+        6
+      )
+      assert.deepStrictEqual(
+        await client.lpos(_key, '3', 'COUNT', 0, 'RANK', 2),
+        [8, 9, 10]
+      )
+    })
+
+    it('lpos rank -3', async function () {
+      const _key = key + ':lpos'
+      await client.del(_key)
+      await client.rpush(_key, ['3', 'a', 'b', 'c', 'd', '1', '2', '3', '4', '3', '3', '3'])
+      assert.deepStrictEqual(
+        await client.lpos(_key, '3', 'COUNT', 3, 'RANK', -2),
+        [10, 9, 7]
+      )
+    })
+
+    it('lpos on unexisting key', async function () {
+      const _key = key + ':lpos'
+      await client.del(_key)
+      assert.strictEqual(
+        await client.lpos(_key, '3'),
+        null
+      )
+    })
+
+    it('lpos zero rank', async function () {
+      const _key = key + ':lpos'
+      await client.del(_key)
+      await assertError(async () => {
+        await client.lpos(_key, '3', 'RANK', 0)
+      }, "ERR RANK can't be zero: use 1 to start from the first match, 2 from the second ... or use negative to start from the end of the list")
+    })
+
+    it('lpos negative count', async function () {
+      const _key = key + ':lpos'
+      await client.del(_key)
+      await assertError(async () => {
+        await client.lpos(_key, '3', 'count', -1)
+      }, "ERR COUNT can't be negative")
+    })
+
+    it('lpos negative maxlen', async function () {
+      const _key = key + ':lpos'
+      await client.del(_key)
+      await assertError(async () => {
+        await client.lpos(_key, '3', 'maxlen', -1)
+      }, "ERR MAXLEN can't be negative")
+    })
+  })
+
+  describe('list error', function () {
+    const key = 'test:list:error'
+
+    before(async function () {
+      await client.del(key)
+    })
+
+    it('rpush no elements', async function () {
+      await assertError(async () => {
+        await client.rpush(key)
+      }, 'ERR wrong number of arguments for \'rpush\' command')
+    })
+
+    it('lrange with start not a number', async function () {
+      const _key = key + ':lrange:error'
+      const elements = 'abcdefghijklmnopq'.split('')
+      await client.del(_key)
+      await client.rpush(_key, ...elements)
+      await assertError(async () => {
+        await client.lrange(_key, 'x4', 10)
+      }, 'ERR value is not an integer or out of range')
+    })
+
+    it('ltrim start > stop', async function () {
+      const _key = key + ':ltrim:error'
+      const elements = 'abcdefghijklmnopq'.split('')
+      await client.del(_key)
+      await client.rpush(_key, ...elements)
+      assert.strictEqual(
+        await client.ltrim(_key, 10, 1),
+        'OK'
+      )
+      assert.deepStrictEqual(
+        await client.lrange(_key, 0, -1),
+        []
+      )
+    })
+
+    it('ltrim on undefined key', async function () {
+      const _key = key + ':ltrim:undefined'
+      await client.del(_key)
+      assert.strictEqual(
+        await client.ltrim(_key, 1, 10),
+        'OK'
+      )
+      assert.deepStrictEqual(
+        await client.lrange(_key, 0, -1),
+        []
+      )
+    })
+  })
 })
 
 describe('Client quit', function () {

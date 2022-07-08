@@ -21,3 +21,7 @@ insert_final_newline = true
 
 [*.aof]
 end_of_line = crlf
+
+[*.sh]
+indent_style = tab
+indent_size = 4

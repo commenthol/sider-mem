@@ -450,5 +450,78 @@ export class Commands {
      * @param  {...string} channels
      */
     unsubscribe(...channels: string[]): void;
+    /**
+     * @param {string} key
+     * @param {number} index
+     * @returns {string|null}
+     */
+    lindex(key: string, index: number): string | null;
+    /**
+     * @param {string} key
+     * @returns {number}
+     */
+    llen(key: string): number;
+    /**
+     * @param {string} key
+     * @param {number} [count]
+     * @returns {string[]|null}
+     */
+    lpop(key: string, count?: number | undefined): string[] | null;
+    lpos(key: any, element: any, ...args: any[]): any;
+    /**
+     * @param {string} key
+     * @param {string[]} elements
+     * @returns {number}
+     */
+    lpush(key: string, ...elements: string[]): number;
+    /**
+     * @param {string} key
+     * @param {string[]} elements
+     * @returns {number}
+     */
+    lpushx(key: string, ...elements: string[]): number;
+    /**
+     * @param {string} key
+     * @param {number} start
+     * @param {number} stop
+     */
+    lrange(key: string, start: number, stop: number): any;
+    /**
+     * @param {string} key
+     * @param {number} count
+     * @param {*} element
+     */
+    lrem(key: string, count: number, element: any): number;
+    /**
+     * @param {string} key
+     * @param {number} index
+     * @param {string} element
+     * @returns {string}
+     */
+    lset(key: string, index: number, element: string): string;
+    /**
+     * @param {string} key
+     * @param {number} start
+     * @param {number} stop
+     */
+    ltrim(key: string, start: number, stop: number): string;
+    /**
+     * @param {string} key
+     * @param {number} [count]
+     * @returns {string[]|null}
+     */
+    rpop(key: string, count?: number | undefined): string[] | null;
+    /**
+     * @param {string} key
+     * @param {string[]} elements
+     * @returns {number}
+     */
+    rpush(key: string, ...elements: string[]): number;
+    /**
+     * @param {string} key
+     * @param {string[]} elements
+     * @returns {number}
+     */
+    rpushx(key: string, ...elements: string[]): number;
 }
 import { ResponseData } from "./Protocol.js";

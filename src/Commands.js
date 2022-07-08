@@ -46,6 +46,7 @@ const {
   ERR_WRONGPASS,
   ERR_EXECABORT,
   ERR_NO_SUCH_KEY,
+  ERR_RANGE,
   NX,
   XX,
   GT,
@@ -56,7 +57,8 @@ const {
   FALSE,
   TYPE_STRING,
   TYPE_HASH,
-  TYPE_NONE
+  TYPE_NONE,
+  TYPE_LIST
 } = require('./constants.js')
 const { logger } = require('./log.js')
 
@@ -81,11 +83,13 @@ const PEXPIREAT = 'pexpireat'
 const SET = 'set'
 
 /**
- * @param {any} value
+ * @param {any[]} values
  */
-const assertInteger = (value) => {
-  if (!isInteger(Number(value))) {
-    throw new Error(ERR_NOT_INTEGER)
+const assertInteger = (...values) => {
+  for (const value of values) {
+    if (!isInteger(Number(value))) {
+      throw new Error(ERR_NOT_INTEGER)
+    }
   }
 }
 
@@ -122,6 +126,47 @@ const parseScanArgs = (args) => {
     }
   }
   return { matcher, count, type }
+}
+
+/**
+ * @param {number} index
+ * @param {number} length
+ * @returns {number}
+ */
+const normNegativeIndex = (index, length) => index < 0 ? length + index : index
+
+/**
+ * finds start stop position for lrange
+ * @param {number} start
+ * @param {number} stop
+ * @param {number} length
+ * @returns {[start?: number, stop?: number]}
+ */
+const lrangeStartStop = (start, stop, length) => {
+  start = Number(start)
+  stop = Number(stop)
+  assertInteger(start, stop)
+  if (!length) return []
+  start = normNegativeIndex(start, length)
+  stop = normNegativeIndex(stop, length)
+  if (start > stop) return []
+  return [start, stop + 1]
+}
+
+/**
+ * obtain subarguments of a command as hashmap
+ * @param {any[]} arr
+ * @param {function} [transform]
+ * @returns {object}
+ */
+const subarguments = (arr, transform = v => v) => {
+  const args = {}
+  for (let i = 0; i < arr.length; i += 2) {
+    const key = String(arr[i]).toLowerCase()
+    const val = arr[i + 1]
+    args[key] = transform(val)
+  }
+  return args
 }
 
 class Commands {
@@ -1432,6 +1477,267 @@ class Commands {
    */
   unsubscribe (...channels) {
     this._pubsub.unsubscribe(this._client, channels)
+  }
+
+  // --- list
+
+  /**
+   * @param {string} key
+   * @param {number} index
+   * @returns {string|null}
+   */
+  lindex (key, index) {
+    const _index = Number(index)
+    assertInteger(_index)
+    const list = this._cache.get(key, TYPE_LIST)
+    if (!list) return null
+    const pos = normNegativeIndex(_index, list.length)
+    return list[pos] ?? null
+  }
+
+  /**
+   * @param {string} key
+   * @returns {number}
+   */
+  llen (key) {
+    const list = this._cache.get(key, TYPE_LIST)
+    return list ? list.length : 0
+  }
+
+  /**
+   * @param {string} key
+   * @param {number} [count]
+   * @returns {string[]|null}
+   */
+  lpop (key, count) {
+    const _count = Number(count || 1)
+    assertInteger(_count)
+    const list = this._cache.get(key, TYPE_LIST)
+    if (!list) return null
+    const out = []
+    const size = Math.min(list.length, _count)
+    for (let i = 0; i < size; i++) {
+      out.push(list.shift() ?? null)
+    }
+    list.length ? this._cache.set(key, list) : this._cache.delete(key)
+    return _count === 1 ? out[0] : out
+  }
+
+  lpos (key, element, ...args) {
+    const transform = (v) => {
+      assertInteger(v)
+      return Number(v)
+    }
+    let { rank = 1, count = 1, maxlen } = subarguments(args, transform)
+
+    if (count < 0) throw new Error("ERR COUNT can't be negative")
+    if (maxlen < 0) throw new Error("ERR MAXLEN can't be negative")
+    if (rank === 0) throw new Error("ERR RANK can't be zero: use 1 to start from the first match, 2 from the second ... or use negative to start from the end of the list")
+
+    const list = this._cache.get(key, TYPE_LIST)
+    if (!list) return null
+
+    count = Math.min(list.length, count || list.length)
+    maxlen = Math.min(list.length, maxlen || list.length)
+    let rankCount = Math.abs(rank)
+    const isCountOne = count === 1
+
+    const pos = []
+
+    if (rank < 0) {
+      let i = maxlen
+      while (i > 0 && count > 0) {
+        i -= 1
+        const el = list[i]
+        if (el === element) {
+          rankCount -= 1
+          if (rankCount <= 0) {
+            pos.push(i)
+            count -= 1
+          }
+        }
+      }
+    } else {
+      let i = 0
+      while (i < maxlen && count > 0) {
+        const el = list[i]
+        if (el === element) {
+          rankCount -= 1
+          if (rankCount <= 0) {
+            pos.push(i)
+            count -= 1
+          }
+        }
+        i += 1
+      }
+    }
+
+    return isCountOne ? pos[0] ?? null : pos
+  }
+
+  /**
+   * @param {string} key
+   * @param {string[]} elements
+   * @returns {number}
+   */
+  lpush (key, ...elements) {
+    const list = this._cache.get(key, TYPE_LIST) || new Array(0)
+    for (const element of elements) {
+      list.unshift(element)
+    }
+    this._cache.set(key, list)
+    return list.length
+  }
+
+  /**
+   * @param {string} key
+   * @param {string[]} elements
+   * @returns {number}
+   */
+  lpushx (key, ...elements) {
+    const list = this._cache.get(key, TYPE_LIST)
+    return list ? this.lpush(key, ...elements) : 0
+  }
+
+  /**
+   * @param {string} key
+   * @param {number} start
+   * @param {number} stop
+   */
+  lrange (key, start, stop) {
+    const list = this._cache.get(key, TYPE_LIST)
+    const [_start, _stop] = lrangeStartStop(start, stop, list?.length)
+    if (!list || _start === undefined) return []
+    return list.slice(_start, _stop)
+  }
+
+  /**
+   * @param {string} key
+   * @param {number} count
+   * @param {*} element
+   */
+  lrem (key, count, element) {
+    assertInteger(count)
+    const list = this._cache.get(key, TYPE_LIST)
+
+    let newList = []
+    let removed = 0
+    if (count > 0) {
+      // Remove elements equal to element moving from tail to head.
+      let i = 0
+      while (i < list.length && count > 0) {
+        const el = list[i]
+        if (el !== element) {
+          newList.push(el)
+        } else {
+          removed++
+          count--
+        }
+        i += 1
+      }
+      newList = newList.concat(list.slice(i))
+    } else if (count < 0) {
+      // Remove elements equal to element moving from tail to head.
+      let i = list.length
+      while (i > 0 && count < 0) {
+        i -= 1
+        const el = list[i]
+        if (el !== element) {
+          newList.unshift(el)
+        } else {
+          removed++
+          count++
+        }
+      }
+      newList = list.slice(0, i).concat(newList)
+    } else {
+      // Remove all elements equal to element
+      for (let i = 0; i < list.length; i++) {
+        const el = list[i]
+        if (el !== element) {
+          newList.push(el)
+        } else {
+          removed++
+        }
+      }
+    }
+
+    newList.length ? this._cache.set(key, newList) : this._cache.delete(key)
+    return removed
+  }
+
+  /**
+   * @param {string} key
+   * @param {number} index
+   * @param {string} element
+   * @returns {string}
+   */
+  lset (key, index, element) {
+    assertInteger(index)
+    const list = this._cache.get(key, TYPE_LIST)
+    index = normNegativeIndex(Number(index), list?.length)
+    if (!list || index >= list.length) {
+      throw new Error(ERR_RANGE)
+    }
+    list.splice(index, 1, element)
+    list.length ? this._cache.set(key, list) : this._cache.delete(key)
+    return OK
+  }
+
+  /**
+   * @param {string} key
+   * @param {number} start
+   * @param {number} stop
+   */
+  ltrim (key, start, stop) {
+    const list = this.lrange(key, start, stop)
+    list.length ? this._cache.set(key, list) : this._cache.delete(key)
+    return OK
+  }
+
+  /**
+   * @param {string} key
+   * @param {number} [count]
+   * @returns {string[]|null}
+   */
+  rpop (key, count) {
+    const _count = Number(count || 1)
+    assertInteger(_count)
+    const list = this._cache.get(key, TYPE_LIST)
+    if (!list) {
+      return null
+    }
+    const out = []
+    const size = Math.min(list.length, _count)
+    for (let i = 0; i < size; i++) {
+      out.push(list.pop() ?? null)
+    }
+    list.length ? this._cache.set(key, list) : this._cache.delete(key)
+    return _count === 1 ? out[0] : out
+  }
+
+  /**
+   * @param {string} key
+   * @param {string[]} elements
+   * @returns {number}
+   */
+  rpush (key, ...elements) {
+    const list = this._cache.get(key, TYPE_LIST) || new Array(0)
+    for (const element of elements) {
+      list.push(element)
+    }
+    this._cache.set(key, list)
+    return list.length
+  }
+
+  /**
+   * @param {string} key
+   * @param {string[]} elements
+   * @returns {number}
+   */
+  rpushx (key, ...elements) {
+    const list = this._cache.get(key, TYPE_LIST)
+    return list ? this.rpush(key, ...elements) : 0
   }
 }
 

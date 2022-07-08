@@ -10,7 +10,7 @@ const process = require('process')
 const crypto = require('crypto')
 const { promisify } = require('util')
 const picomatch = require('picomatch')
-const { TYPE_STRING, TYPE_HASH, TYPE_NONE } = require('./constants')
+const { TYPE_STRING, TYPE_HASH, TYPE_NONE, TYPE_LIST } = require('./constants')
 
 /**
  * @param {any} v
@@ -34,7 +34,7 @@ const isNumber = (v) => typeof v === 'number'
  * @param {any} v
  * @returns {boolean}
  */
-const isInteger = (v) => isNumber(v) ? v === Math.floor(v) : false
+const isInteger = (v) => Number.isSafeInteger(v)
 
 /**
  * @param {any} v
@@ -64,7 +64,8 @@ const toNumber = v => isNaN(v) ? 0 : Number(v)
 const typeMap = {
   Number: TYPE_STRING,
   String: TYPE_STRING,
-  Object: TYPE_HASH
+  Object: TYPE_HASH,
+  Array: TYPE_LIST
 }
 
 /**

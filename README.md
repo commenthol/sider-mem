@@ -1,12 +1,13 @@
 # sider-mem
 
-> A in-memory datastore in node for [Redis™][redis][^redis] compatible clients
+> An in-memory datastore in node for [Redis™][redis][^redis] compatible clients
 
 Supports:
 - [auth][]entication
 - expiry ([expire][], [ttl][], [pexpire][], [pttl][], ...)
 - strings ([set][], [mset][], [get][], [mget][], ...)
 - hashes ([hset][], [hmset][], [hget][], [hgetall][], ...)
+- list ([lindex][], [llen][], [lpop][], [lpush] [], ...)
 - publish/ subscribe ([publish][], [subscribe][], [psubscribe][], ...)
 - persistence
 
@@ -51,7 +52,7 @@ const client = redis.createClient({user: 'alice', password: 'somepassword'})
 client.ping((err, data) => console.log(data)) // PONG
 ```
 
-See [example](./examples) for use with a clustered app. 
+See [example](./examples) for use with a clustered app.
 Start with `npm run example` and browse to http://localhost:3000
 
 
@@ -123,6 +124,16 @@ Start with `npm run example` and browse to http://localhost:3000
 - [incrby][]
 - [incrbyfloat][]
 - [info][]
+- [lindex][]
+- [llen][]
+- [lpop][]
+- [lpos][]
+- [lpush][]
+- [lpushx][]
+- [lrange][]
+- [lrem][]
+- [lset][]
+- [ltrim][]
 - [mget][]
 - [mset][]
 - [msetnx][]
@@ -139,6 +150,9 @@ Start with `npm run example` and browse to http://localhost:3000
 - [pubsub][]
 - [punsubscribe][]
 - [quit][]
+- [rpop][]
+- [rpush][]
+- [rpushx][]
 - [scan][]
 - [select][]
 - [set][]
@@ -212,6 +226,16 @@ Start with `npm run example` and browse to http://localhost:3000
 [incrby]: https://redis.io/commands/incrby
 [incrbyfloat]: https://redis.io/commands/incrbyfloat
 [info]: https://redis.io/commands/info
+[lindex]: https://redis.io/commands/lindex
+[llen]: https://redis.io/commands/llen
+[lpop]: https://redis.io/commands/lpop
+[lpos]: https://redis.io/commands/lpos
+[lpush]: https://redis.io/commands/lpush
+[lpushx]: https://redis.io/commands/lpushx
+[lrange]: https://redis.io/commands/lrange
+[lrem]: https://redis.io/commands/lrem
+[lset]: https://redis.io/commands/lset
+[ltrim]: https://redis.io/commands/ltrim
 [mget]: https://redis.io/commands/mget
 [mset]: https://redis.io/commands/mset
 [msetnx]: https://redis.io/commands/msetnx
@@ -228,6 +252,9 @@ Start with `npm run example` and browse to http://localhost:3000
 [pubsub]: https://redis.io/commands/pubsub
 [punsubscribe]: https://redis.io/commands/punsubscribe
 [quit]: https://redis.io/commands/quit
+[rpop]: https://redis.io/commands/rpop
+[rpush]: https://redis.io/commands/rpush
+[rpushx]: https://redis.io/commands/rpushx
 [scan]: https://redis.io/commands/scan
 [select]: https://redis.io/commands/select
 [set]: https://redis.io/commands/set
