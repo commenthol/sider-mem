@@ -6,8 +6,19 @@
  */
 
 // @ts-nocheck
+const os = require('os')
 
-const MegaHash = require('megahash')
+let MegaHash
+if (os.platform() !== 'darwin') {
+  MegaHash = require('megahash')
+} else {
+  class Map {
+    constructor () {
+      throw new Error('platform not supported')
+    }
+  }
+  MegaHash = Map
+}
 
 class Map extends MegaHash {
   get size () {

@@ -1,11 +1,18 @@
 // @ts-nocheck
 
+const os = require('os')
 const assert = require('assert')
-const MegaMap = require('../src/MegaMap.js')
+const { describeBool } = require('./describeBool.js')
 const { strictEqual, deepStrictEqual } = assert
 
-describe('MegaMap', function () {
-  let hash = new MegaMap()
+describeBool(os.platform() !== 'darwin')('MegaMap', function () {
+  let hash
+  let MegaMap
+
+  before(() => {
+    MegaMap = require('../src/MegaMap.js')
+    hash = new MegaMap()
+  })
 
   it('set', function () {
     hash = new MegaMap()
