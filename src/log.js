@@ -1,4 +1,4 @@
-const debug = require('debug-level').log
+const { logger: debug } = require('debug-level')
 
 let logFn = debug
 

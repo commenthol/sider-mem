@@ -921,7 +921,7 @@ describe('Server', function () {
 
       assertRange(
         await client.pttl(key),
-        [100, 70])
+        [130, 70]) // sleep is inaccurate allow ±30ms
 
       await sleep(105)
       assert.strictEqual(

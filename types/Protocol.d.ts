@@ -25,6 +25,6 @@ export namespace RequestParser {
 }
 import EventEmitter = require("events");
 declare namespace DEFAULT_OPTIONS {
-    const maxBufferLength: number;
+    let maxBufferLength: number;
 }
 export {};

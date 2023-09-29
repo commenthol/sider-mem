@@ -1,6 +1,6 @@
 {
   "name": "sider-mem",
-  "version": "1.3.0",
+  "version": "1.3.1-0",
   "description": "An in-memory datastore in node for redis compatible clients",
   "keywords": [
     "redis",
@@ -26,57 +26,70 @@
     },
     "./dist": {
       "require": "./dist/index.js"
-    }
+    },
+    ".": {
+      "types": "./types/index.t.ds",
+      "require": "./src/index.js"
+    },
+    "./package.json": "package.json"
   },
   "main": "src/index.js",
   "types": "types/index.d.ts",
   "bin": {
     "sider-mem": "bin/sider-mem.js"
   },
+  "files": [
+    "src",
+    "dist",
+    "types",
+    "bin"
+  ],
   "scripts": {
-    "all": "npm run lint && npm t && npm run build && npm run check && npm run types",
+    "all": "npm run lint && npm t && npm run build && npm run types",
     "build": "npx esbuild --bundle src/index.js --outdir=dist --minify --platform=node --target=esnext",
-    "check": "tsc --noEmit true",
     "coverage": "c8 -r html -r text mocha",
     "dev": "DEBUG_LEVEL=debug nodemon bin/sider-mem.js --host 0.0.0.0 --port 6378",
     "docs": "jsdoc src -r -c ./jsdoc.config.json -d docs",
     "example": "DEBUG_JSON=1 DEBUG_LEVEL=debug node examples/cluster.js",
-    "lint": "eslint --fix --ext .js .",
+    "lint": "eslint --ext .js .",
     "prepublishOnly": "npm run all",
     "start": "DEBUG_LEVEL=debug ./bin/sider-mem.js",
     "test": "c8 mocha",
-    "types": "rm -r types; tsc --emitDeclarationOnly true --noEmitOnError"
+    "types": "rm -r types; tsc"
   },
   "mocha": {
     "exit": true
   },
   "dependencies": {
-    "debug-level": "^2.1.2",
+    "debug-level": "^3.1.1",
     "picomatch": "^2.3.1"
   },
   "devDependencies": {
-    "@types/mocha": "^9.1.1",
-    "@types/node": "^18.0.3",
-    "@types/picomatch": "^2.3.0",
-    "c8": "^7.11.3",
-    "connect-redis": "^6.1.3",
+    "@types/mocha": "^10.0.2",
+    "@types/node": "^20.8.3",
+    "@types/picomatch": "^2.3.1",
+    "c8": "^8.0.1",
+    "connect-redis": "^7.1.0",
     "debug": "^4.3.4",
-    "eslint": "^8.19.0",
-    "eslint-config-standard": "^17.0.0",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-n": "^15.2.4",
-    "eslint-plugin-promise": "^6.0.0",
-    "express": "^4.18.1",
+    "eslint": "^8.51.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-n": "^16.1.0",
+    "eslint-plugin-promise": "^6.1.1",
+    "express": "^4.18.2",
     "express-session": "^1.17.3",
     "hamt": "^2.2.2",
-    "jsdoc": "^3.6.10",
-    "mocha": "^10.0.0",
+    "jsdoc": "^4.0.2",
+    "mocha": "^10.2.0",
     "redis": "^3.1.2",
-    "sinon": "^14.0.0",
-    "typescript": "^4.7.4"
+    "sinon": "^16.1.0",
+    "typescript": "^5.2.2"
   },
   "peerDependencies": {
     "megahash": "^1.0.5"
+  },
+  "c4uIgnore": {
+    "redis": "^3 // upgrade to ^4 needs refactoring"
   },
   "engine": {
     "node": ">=16.0.0"
