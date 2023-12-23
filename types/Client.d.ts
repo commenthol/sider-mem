@@ -23,7 +23,7 @@ export class Client {
     private _transaction;
     /** @private @type { any[][] } */
     private _queue;
-    set isAuthenticated(arg: boolean);
+    set isAuthenticated(flag: boolean);
     /**
      * @type {boolean}
      */
